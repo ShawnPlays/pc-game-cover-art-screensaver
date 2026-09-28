@@ -73,7 +73,7 @@ internal sealed class MosaicView : Grid
             return;
         }
 
-        var fitted = MosaicLayout.Fit(settings.MosaicColumns, ActualWidth, ActualHeight, CoverShapes.TileAspect(settings.Filter.CoverShape));
+        var fitted = MosaicLayout.Fit(settings.MosaicColumns, ActualWidth, ActualHeight, CoverShapes.TileAspect(settings.Filter.CoverShape, settings.Source));
         if (planner == null || fitted.Columns != layout.Columns || fitted.Rows != layout.Rows)
         {
             layout = fitted;

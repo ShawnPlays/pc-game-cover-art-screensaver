@@ -181,21 +181,43 @@
             <TabItem Header="Library &amp; filters">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="12">
-                        <GroupBox Header="Playnite library">
+                        <GroupBox Header="Game library">
                             <StackPanel>
-                                <TextBlock x:Name="LibraryStatus" TextWrapping="Wrap" Margin="0,2,0,8" />
-                                <DockPanel>
-                                    <Button DockPanel.Dock="Right" Content="Browse…" Padding="10,2" Margin="6,0,0,0" Click="OnBrowseClick" />
-                                    <TextBox x:Name="LibraryPathBox" Text="{Binding LibraryFileOverride, UpdateSourceTrigger=PropertyChanged}"
-                                             ToolTip="Leave empty to use the add-on's default location." />
+                                <DockPanel Margin="0,2,0,6">
+                                    <TextBlock Text="Get games from" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <ComboBox x:Name="SourceCombo" SelectedValue="{Binding Source}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                                              SelectionChanged="OnSourceChanged" />
                                 </DockPanel>
-                                <TextBlock Foreground="#666" FontSize="11" Margin="0,2,0,0">Custom export file (leave empty for the default)</TextBlock>
+                                <TextBlock x:Name="LibraryStatus" TextWrapping="Wrap" Margin="0,2,0,8" />
+
+                                <StackPanel x:Name="PlaynitePanel">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="Browse…" Padding="10,2" Margin="6,0,0,0" Click="OnBrowseClick" />
+                                        <TextBox x:Name="LibraryPathBox" Text="{Binding LibraryFileOverride, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="Leave empty to use the add-on's default location." />
+                                    </DockPanel>
+                                    <TextBlock Foreground="#666" FontSize="11" Margin="0,2,0,0">Custom export file (leave empty for the default)</TextBlock>
+                                </StackPanel>
+
+                                <StackPanel x:Name="SteamPanel">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="Browse…" Padding="10,2" Margin="6,0,0,0" Click="OnBrowseSteamClick" />
+                                        <TextBox x:Name="SteamPathBox" Text="{Binding SteamFolderOverride, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="Leave empty to find Steam automatically." />
+                                    </DockPanel>
+                                    <TextBlock Foreground="#666" FontSize="11" Margin="0,2,0,0">Steam folder (leave empty to find it automatically)</TextBlock>
+                                    <TextBlock TextWrapping="Wrap" Foreground="#666" FontSize="11" Margin="0,6,0,0">
+                                        Reads Steam's own files, so no add-on is needed and Steam doesn't have to be running. Uses the
+                                        Steam account that signed in most recently. Games appear once Steam has downloaded their cover
+                                        art, which happens when you open your library in Steam.
+                                    </TextBlock>
+                                </StackPanel>
                             </StackPanel>
                         </GroupBox>
 
                         <GroupBox Header="Which games">
                             <StackPanel DataContext="{Binding Filter}">
-                                <CheckBox Content="Include games hidden in Playnite" IsChecked="{Binding IncludeHidden}" />
+                                <CheckBox Content="Include hidden games" IsChecked="{Binding IncludeHidden}" />
                                 <CheckBox Content="Installed games only" IsChecked="{Binding InstalledOnly}" />
                                 <CheckBox Content="Favorites only" IsChecked="{Binding FavoritesOnly}" />
                                 <CheckBox Content="Skip games without cover art (otherwise show a title card)" IsChecked="{Binding SkipGamesWithoutCover}" />
@@ -242,7 +264,8 @@
                                              ToolTip="Overrides the content filter for games it catches by mistake." />
                                 </Grid>
                                 <TextBlock TextWrapping="Wrap" Foreground="#666" FontSize="11" Margin="0,4,0,0">
-                                    Tip: in Playnite, select games → right-click → Edit → Tags to add these tags in bulk.
+                                    Playnite: add these as tags (select games → right-click → Edit → Tags).
+                                    Steam: create a collection with this name and add games to it.
                                 </TextBlock>
                             </StackPanel>
                         </GroupBox>
@@ -260,8 +283,8 @@
                     <TextBlock FontSize="18" FontWeight="SemiBold" Text="PC Game Cover Art Screensaver" />
                     <TextBlock x:Name="VersionText" Foreground="#666" Margin="0,2,0,12" />
                     <TextBlock TextWrapping="Wrap">
-                        Shows your Playnite library's cover art as a classic coverflow or a flipping mosaic. Requires the
-                        "PC Game Cover Art Exporter" add-on in Playnite.
+                        Shows the cover art from your Playnite or Steam library as a classic coverflow or a flipping mosaic.
+                        Playnite needs the "PC Game Cover Art Exporter" add-on; Steam needs nothing extra.
                     </TextBlock>
                     <TextBlock x:Name="CopyrightText" TextWrapping="Wrap" Foreground="#666" Margin="0,12,0,0" />
                     <TextBlock Margin="0,6,0,0">

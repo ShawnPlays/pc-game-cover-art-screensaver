@@ -12,6 +12,15 @@ public enum CoverOrder
     ReleaseYear,
 }
 
+/// <summary>Where the list of games and their cover art comes from.</summary>
+public enum LibrarySource
+{
+    /// <summary>A snapshot written by the PC Game Cover Art Exporter add-on inside Playnite.</summary>
+    Playnite,
+    /// <summary>Read directly from Steam's own files; no add-on needed.</summary>
+    Steam,
+}
+
 public enum SaverLayout
 {
     /// <summary>The classic sliding 3D coverflow.</summary>
@@ -60,8 +69,13 @@ public sealed class SaverSettings
     public int MouseMoveThreshold { get; set; } = 12;
 
     // ---- Library ----
-    /// <summary>Leave empty to use the add-on's default export location.</summary>
+    public LibrarySource Source { get; set; } = LibrarySource.Playnite;
+
+    /// <summary>Playnite only. Leave empty to use the add-on's default export location.</summary>
     public string? LibraryFileOverride { get; set; }
+
+    /// <summary>Steam only. Leave empty to find Steam automatically.</summary>
+    public string? SteamFolderOverride { get; set; }
 
     public FilterSettings Filter { get; set; } = new();
 

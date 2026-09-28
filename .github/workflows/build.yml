@@ -41,14 +41,14 @@ jobs:
           body: |
             ## How to install
 
-            Download **both** files from **Assets** below:
+            Download from **Assets** below:
 
-            - `PCGameCoverArtExporter_*.pext`: double-click it (or drag it onto Playnite), click **Yes**, then restart Playnite.
-            - `PCGameCoverArt.scr`: right-click → **Properties** → tick **Unblock** → **OK**, then copy it into `C:\Windows\System32`.
+            - `PCGameCoverArt.scr` (everyone): right-click → **Properties** → tick **Unblock** → **OK**, then copy it into `C:\Windows\System32`.
+            - `PCGameCoverArtExporter_*.pext` (Playnite users only): double-click it (or drag it onto Playnite), click **Yes**, then restart Playnite. Steam users don't need it.
 
-            Then open **Change screen saver** from the Start menu, choose **PCGameCoverArt**, and click **Settings…** to set it up.
+            Then open **Change screen saver** from the Start menu, choose **PCGameCoverArt**, click **Settings…**, and choose **Playnite** or **Steam** under **Get games from**.
 
             Full step-by-step directions, updating, uninstalling and troubleshooting:
             **${{ github.server_url }}/${{ github.repository }}#install**
 
-            Requires Windows 10/11 (64-bit) and Playnite 10.
+            Requires Windows 10/11 (64-bit), and Playnite 10 or Steam.

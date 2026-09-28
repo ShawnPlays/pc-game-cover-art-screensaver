@@ -7,6 +7,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 using CoverArtSaver.Core;
+using CoverArtSaver.Core.Steam;
 using Microsoft.Win32;
 
 namespace CoverArtSaver.Windows;
@@ -20,7 +21,8 @@ public partial class SettingsWindow : Window
     private readonly SaverSettings working;
     private readonly DispatcherTimer summaryTimer;
     private LibraryData? library;
-    private string? loadedLibraryPath;
+    private string? libraryStatus;
+    private string? loadedLibraryKey;
     private CoverSizeCache? coverSizes;
     private bool measuringCovers;
 
@@ -31,6 +33,11 @@ public partial class SettingsWindow : Window
         working = settings.Clone(); // edit a copy so Cancel really cancels
         DataContext = working;
 
+        SourceCombo.ItemsSource = new Dictionary<LibrarySource, string>
+        {
+            [LibrarySource.Playnite] = "Playnite (needs the PC Game Cover Art Exporter add-on)",
+            [LibrarySource.Steam] = "Steam",
+        };
         LayoutCombo.ItemsSource = Enum.GetValues<SaverLayout>();
         OrderCombo.ItemsSource = Enum.GetValues<CoverOrder>();
         MonitorCombo.ItemsSource = Enum.GetValues<MultiMonitorMode>();
@@ -64,6 +71,7 @@ public partial class SettingsWindow : Window
         Loaded += (_, _) =>
         {
             UpdateSummary();
+            UpdateSourcePanels();
             UpdateLayoutSections();
             UpdateMosaicRows(working.MosaicColumns);
         };
@@ -103,7 +111,7 @@ public partial class SettingsWindow : Window
         }
 
         var layout = MosaicLayout.Fit(columns, SystemParameters.PrimaryScreenWidth, SystemParameters.PrimaryScreenHeight,
-            CoverShapes.TileAspect(working.Filter.CoverShape));
+            CoverShapes.TileAspect(working.Filter.CoverShape, working.Source));
         MosaicRowsText.Text = $"{layout.Rows} rows ({layout.TileCount} covers) on your main screen";
     }
 
@@ -126,35 +134,24 @@ public partial class SettingsWindow : Window
     private void UpdateSummary()
     {
         CommitKeywordLists();
-        var path = working.LibraryFile;
 
-        if (!File.Exists(path))
+        // Only re-read when something that changes the game list changes. The cover shape is included because
+        // it decides which of Steam's images each game uses.
+        var key = string.Join("|", working.Source, working.LibraryFile, working.SteamFolderOverride, working.Filter.CoverShape);
+        if (key != loadedLibraryKey)
         {
-            library = null;
-            loadedLibraryPath = null;
-            LibraryStatus.Text = $"⚠ No export found at {path}.\nInstall the \"PC Game Cover Art Exporter\" add-on in Playnite and restart Playnite.";
+            var read = LibrarySources.Read(working);
+            library = read.Data;
+            libraryStatus = read.Status;
+            loadedLibraryKey = key;
+        }
+
+        LibraryStatus.Text = libraryStatus;
+        if (library == null)
+        {
             FilterSummary.Text = "No games to preview yet.";
             return;
         }
-
-        try
-        {
-            if (library == null || loadedLibraryPath != path)
-            {
-                library = LibraryData.Load(path);
-                loadedLibraryPath = path;
-            }
-        }
-        catch (Exception ex)
-        {
-            library = null;
-            LibraryStatus.Text = "⚠ Couldn't read the export: " + ex.Message;
-            FilterSummary.Text = "";
-            return;
-        }
-
-        var age = DateTime.UtcNow - library.ExportedAt;
-        LibraryStatus.Text = $"✔ {library.Games.Count} games, exported {Describe(age)} ago.";
 
         if (working.Filter.CoverShape != CoverShape.All && coverSizes == null)
         {
@@ -166,7 +163,7 @@ public partial class SettingsWindow : Window
         var result = new GameFilter(working.Filter, coverAspect: coverSizes == null ? null : coverSizes.GetAspect).Apply(library.Games);
         var reasons = result.ExcludedCounts
             .OrderByDescending(kv => kv.Value)
-            .Select(kv => $"{kv.Value} {DescribeReason(kv.Key, working.Filter.CoverShape)}");
+            .Select(kv => $"{kv.Value} {DescribeReason(kv.Key, working.Filter.CoverShape, working.Source)}");
         FilterSummary.Text =
             $"{result.Included.Count} of {library.Games.Count} games will appear in the screensaver." +
             (result.TotalExcluded > 0 ? "\nHidden: " + string.Join(", ", reasons) + "." : "");
@@ -204,15 +201,9 @@ public partial class SettingsWindow : Window
         UpdateSummary();
     }
 
-    private static string Describe(TimeSpan age) =>
-        age.TotalMinutes < 1 ? "just now"
-        : age.TotalHours < 1 ? $"{(int)age.TotalMinutes} min"
-        : age.TotalDays < 1 ? $"{(int)age.TotalHours} h"
-        : $"{(int)age.TotalDays} days";
-
-    private static string DescribeReason(ExclusionReason reason, CoverShape shape) => reason switch
+    private static string DescribeReason(ExclusionReason reason, CoverShape shape, LibrarySource source) => reason switch
     {
-        ExclusionReason.Hidden => "hidden in Playnite",
+        ExclusionReason.Hidden => $"hidden in {source}",
         ExclusionReason.NotInstalled => "not installed",
         ExclusionReason.NotFavorite => "not favorites",
         ExclusionReason.HideTag => "tagged to hide",
@@ -244,6 +235,34 @@ public partial class SettingsWindow : Window
         if (dialog.ShowDialog(this) == true)
         {
             LibraryPathBox.Text = dialog.FileName;
+        }
+    }
+
+    private void OnSourceChanged(object sender, SelectionChangedEventArgs e)
+    {
+        UpdateSourcePanels();
+        ScheduleSummary(sender, e);
+        UpdateMosaicRows(working.MosaicColumns); // Steam's landscape covers are wider than Playnite's
+    }
+
+    /// <summary>Show the location setting for the chosen source only.</summary>
+    private void UpdateSourcePanels()
+    {
+        var steam = SourceCombo.SelectedValue is LibrarySource.Steam;
+        SteamPanel.Visibility = steam ? Visibility.Visible : Visibility.Collapsed;
+        PlaynitePanel.Visibility = steam ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void OnBrowseSteamClick(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Choose the folder Steam is installed in",
+            InitialDirectory = SteamLibrary.FindSteamFolder() ?? "",
+        };
+        if (dialog.ShowDialog(this) == true)
+        {
+            SteamPathBox.Text = dialog.FolderName;
         }
     }
 

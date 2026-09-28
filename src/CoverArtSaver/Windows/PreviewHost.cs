@@ -32,7 +32,7 @@ internal static class PreviewHost
 
         var library = LibraryLoader.Load(settings);
         var content = library.Problem != null
-            ? CoverflowView.CreateMessageView("Playnite library not found")
+            ? CoverflowView.CreateMessageView("Game library not found")
             : ScreensaverSession.BuildContent(settings, library, isPrimary: true, 0, 1, Environment.TickCount, Stopwatch.StartNew(), isPreview: true);
 
         // HwndSource sizes in pixels, WPF content in DIPs: convert so the content fills the preview exactly.

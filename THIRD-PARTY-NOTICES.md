@@ -58,7 +58,13 @@ These are needed to build the project but aren't part of the files users downloa
 | [Microsoft.NET.Test.Sdk](https://github.com/microsoft/vstest) | MIT | Unit tests |
 | [Microsoft.NETFramework.ReferenceAssemblies](https://github.com/microsoft/dotnet) | MIT | Building the add-on without the .NET Framework developer pack |
 
+## Steam data
+
+The Steam option reads files that Steam keeps on your PC. The list of Steam store tag names built into the program
+(`src/CoverArtSaver.Core/Steam/SteamTags.cs`) comes from Steam's public tag list. Steam and the Steam logo are
+trademarks of Valve Corporation. This project isn't affiliated with or endorsed by Valve.
+
 ## Game cover art
 
-The screensaver displays cover art from your own Playnite library. That artwork belongs to its respective owners.
+The screensaver displays cover art from your own Playnite or Steam library. That artwork belongs to its respective owners.
 This project doesn't include or distribute any.

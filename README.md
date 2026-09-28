@@ -2,8 +2,8 @@
 
 # PC Game Cover Art Screensaver
 
-A Windows 10/11 screensaver that shows the cover art from your [Playnite](https://playnite.link) library. Choose between
-two styles, both inspired by old iTunes screensavers:
+A Windows 10/11 screensaver that shows the cover art from your [Playnite](https://playnite.link) or
+[Steam](https://store.steampowered.com) library. Choose between two styles, both inspired by old iTunes screensavers:
 
 - **Coverflow:** covers slide past in 3D, with angled side covers and reflections.
 - **Mosaic:** a wall of covers that flip over one at a time, like the iTunes Album Artwork screensaver.
@@ -16,11 +16,12 @@ two styles, both inspired by old iTunes screensavers:
 
 - Smooth 3D coverflow with reflections, rendered with WPF
 - **Mosaic style**, like iTunes' Album Artwork screensaver: a wall of covers that flip over one at a time. You choose how many covers go across; the number of rows follows your screen's shape
-- Uses your local Playnite library; no internet connection or API keys
+- Works with **Playnite** (all your launchers in one library, through a small add-on) or **Steam** (read directly from
+  Steam's own files, with nothing extra to install). No internet connection, account login or API keys
 - Standard screensaver behavior: full screen on every monitor, live preview in Windows' Screen Saver Settings, and a settings dialog
-- **Optional content filter** hides games with nudity or sexual content, based on their tags, genres, features, categories and age ratings. You can edit the word list.
+- **Optional content filter** hides games with nudity or sexual content, based on their tags, genres, features, categories and age ratings (for Steam: its store tags and content descriptors). You can edit the word list.
 - Optional stricter filter for anything rated Mature/18+
-- Per-game override tags you set in Playnite: `Screensaver: Hide` and `Screensaver: Show`
+- Per-game overrides: `Screensaver: Hide` and `Screensaver: Show`, as tags in Playnite or as collections in Steam
 - Order: random, alphabetical, recently played, recently added, release year
 - Include or exclude hidden games, installed-only, favorites-only
 - Cover shape: use all cover art, or only vertical (box art), only square, or only horizontal covers, so the screensaver looks consistent. In the mosaic, tiles take the chosen shape
@@ -28,40 +29,47 @@ two styles, both inspired by old iTunes screensavers:
 
 ## How it works
 
+The screensaver can get your games from either Playnite or Steam. You choose which in its settings.
+
 ```
-┌────────────── Playnite ───────────────┐          ┌──────── PCGameCoverArt.scr ────────┐
-│ PC Game Cover Art Exporter add-on │  writes  │ reads library.json, filters games,    │
-│ (runs whenever your library changes)  │ ───────► │ loads cover images from Playnite's    │
-└───────────────────────────────────────┘          │ library folder, draws the coverflow   │
-          %LOCALAPPDATA%\PCGameCoverArt\library.json  └───────────────────────────────────────┘
+ Playnite ─── PC Game Cover Art Exporter add-on ───► library.json ──┐
+                                                                    ├──► PCGameCoverArt.scr
+ Steam ─────── Steam's own files (read directly) ───────────────────┘      filters games, draws the covers
 ```
 
-Playnite keeps its database locked while it runs, so the screensaver doesn't read it directly. A small Playnite
-add-on exports a JSON snapshot of your library instead, and the screensaver reads that file.
+- **Playnite** keeps its database locked while it runs, so a small Playnite add-on exports a snapshot of your library
+  to `%LOCALAPPDATA%\PCGameCoverArt\library.json`, and the screensaver reads that file.
+- **Steam** needs no add-on. The screensaver reads the cover art Steam has already downloaded for your library, plus
+  Steam's own records of game details, installed games, collections and when you last played. Steam doesn't need to
+  be running.
 
 ## Install
 
 You need:
 
 - Windows 10 or 11 (64-bit)
-- [Playnite](https://playnite.link) 10. The Playnite 11 beta uses a new add-on system that isn't supported yet.
+- **Either** [Playnite](https://playnite.link) 10 (the Playnite 11 beta uses a new add-on system that isn't supported
+  yet) **or** [Steam](https://store.steampowered.com)
 
-The screensaver comes in two parts, and you need both:
+The download has two files:
 
-| File | What it does |
-|---|---|
-| `PCGameCoverArtExporter_x.y.z.pext` | A Playnite add-on that saves a list of your games and their cover art for the screensaver to read |
-| `PCGameCoverArt.scr` | The screensaver itself. It includes everything it needs, so you don't have to install .NET. |
+| File | What it does | Who needs it |
+|---|---|---|
+| `PCGameCoverArt.scr` | The screensaver itself. It includes everything it needs, so you don't have to install .NET. | Everyone |
+| `PCGameCoverArtExporter_x.y.z.pext` | A Playnite add-on that saves a list of your games and their cover art for the screensaver to read | Playnite users only |
 
 ### 1. Download
 
-Go to the **[Releases page](../../releases/latest)** and download both files from the **Assets** list at the
+Go to the **[Releases page](../../releases/latest)** and download the files you need from the **Assets** list at the
 bottom of the latest release.
 
 Your browser may warn that the files aren't commonly downloaded, because they aren't code-signed. In Microsoft Edge,
 click **…** next to the download → **Keep** → **Show more** → **Keep anyway**. In Chrome, click **Keep**.
 
-### 2. Install the Playnite add-on
+### 2. Install the Playnite add-on (Playnite only)
+
+**Using Steam?** Skip this step. Steam needs nothing extra, but open your library in Steam at least once so it has
+downloaded your games' cover art.
 
 1. Double-click `PCGameCoverArtExporter_x.y.z.pext`, or drag it onto Playnite's window.
 2. Click **Yes** when Playnite asks whether to install it.
@@ -95,7 +103,8 @@ To check that it works: in Playnite, open the main menu (☰) → **Extensions**
 
 1. Open Screen Saver Settings: press **Start**, type **screen saver**, and choose **Change screen saver**.
 2. Under **Screen saver**, choose **PCGameCoverArt**.
-3. Click **Settings…** to pick the style (Coverflow or Mosaic), filters and other options, then **OK**.
+3. Click **Settings…**. On the **Library & filters** tab, set **Get games from** to **Playnite** or **Steam**. Then pick
+   the style (Coverflow or Mosaic), filters and other options, and click **OK**.
 4. Set **Wait** to how many idle minutes to wait before it starts. Tick **On resume, display logon screen** if you
    want your PC to lock when you come back.
 5. Click **Preview** to try it. Move the mouse or press a key to stop it.
@@ -103,15 +112,15 @@ To check that it works: in Playnite, open the main menu (☰) → **Extensions**
 
 ### Update to a new version
 
-Download the new files from the [Releases page](../../releases/latest). Install the new `.pext` the same way as
-before, then unblock the new `.scr` and copy it into `C:\Windows\System32`. When Windows asks, choose **Replace the
+Download the new files from the [Releases page](../../releases/latest). If you use Playnite, install the new `.pext`
+the same way as before. Then unblock the new `.scr` and copy it into `C:\Windows\System32`. When Windows asks, choose **Replace the
 file in the destination**. Your settings are kept.
 
 ### Uninstall
 
 1. In Screen Saver Settings, choose a different screensaver (or *(None)*) and click **OK**.
 2. Delete `C:\Windows\System32\PCGameCoverArt.scr`.
-3. In Playnite, open the main menu (☰) → **Add-ons…** → **Installed** → **Generic**. Select **PC Game Cover Art Screensaver
+3. If you use Playnite: open the main menu (☰) → **Add-ons…** → **Installed** → **Generic**. Select **PC Game Cover Art
    Exporter**, click **Uninstall**, and restart Playnite.
 4. Optional: delete the folder `%LOCALAPPDATA%\PCGameCoverArt`, which holds your settings and the saved library.
    Paste that path into File Explorer's address bar to find it.
@@ -122,7 +131,10 @@ file in the destination**. Your settings are kept.
 |---|---|
 | The screensaver says **"No Playnite library export found"** | The add-on hasn't saved your library yet. Make sure it's installed (step 2), restart Playnite, or use **Export library for screensaver now**. |
 | It says **all games were filtered out**, or shows fewer games than you expect | Open **Settings… → Library & filters**. The box at the bottom shows how many games each filter hides. |
-| A game you don't want to see still appears | In Playnite, add the tag `Screensaver: Hide` to it. |
+| A game you don't want to see still appears | In Playnite, add the tag `Screensaver: Hide` to it. In Steam, add it to a collection named `Screensaver: Hide`. |
+| **Steam wasn't found** | In **Settings… → Library & filters**, click **Browse…** next to the Steam folder and choose the folder Steam is installed in. |
+| A Steam game is missing, or shows a title card instead of its cover | Steam hasn't downloaded its artwork yet. Open your library in Steam and scroll past the game, then start the screensaver again. |
+| The wrong Steam account's games appear | The screensaver uses the account that signed in to Steam most recently. Sign in to Steam with the account you want once. |
 | **PCGameCoverArt** isn't in Windows' list | Check that `PCGameCoverArt.scr` is in `C:\Windows\System32`, then reopen Screen Saver Settings. |
 | It doesn't start, or closes immediately | Unblock the file (step 3.1) and copy it again. |
 | Something else | Look in `%LOCALAPPDATA%\PCGameCoverArt\screensaver.log` and include it when you [open an issue](../../issues). |
@@ -135,8 +147,13 @@ one of these words (whole-word, not case-sensitive):
 
 `Nudity`, `Sexual`, `Erotic`, `Hentai`, `NSFW`, `Eroge`, `Adults Only`, `ESRB AO`, `Adult Content`, `Porn`
 
+For **Steam** games, the filter checks their store tags (such as *Nudity* and *Sexual Content*) and the content
+descriptors publishers fill in for Steam (such as *Some Nudity or Sexual Content* and *Adult Only Sexual Content*).
+These contain the same words, so the default list catches them too.
+
 The settings dialog shows how many games each rule hides. If the filter misses a game, add the `Screensaver: Hide` tag
-to it in Playnite. If it hides a game by mistake, add `Screensaver: Show`.
+to it in Playnite, or add it to a Steam collection with that name. If it hides a game by mistake, use
+`Screensaver: Show` the same way.
 
 ## Building from source
 

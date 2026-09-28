@@ -23,9 +23,10 @@ public static class CoverShapes
         : CoverShape.Square;
 
     /// <summary>Mosaic tile proportions (width ÷ height) that suit covers of the chosen shape.</summary>
-    public static double TileAspect(CoverShape shape) => shape switch
+    public static double TileAspect(CoverShape shape, LibrarySource source = LibrarySource.Playnite) => shape switch
     {
         CoverShape.Square => 1.0,
+        CoverShape.Horizontal when source == LibrarySource.Steam => 460.0 / 215, // Steam's header image
         CoverShape.Horizontal => 630.0 / 500, // itch.io's cover size, by far the most common landscape cover in Playnite
         _ => MosaicLayout.TileAspect,         // box art (also used for "All", where most covers are box art)
     };
