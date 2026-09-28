@@ -1,0 +1,54 @@
+name: Build
+
+# Runs on every push and pull request. Pushing a tag like v1.0.0 also publishes a GitHub Release
+# with the .scr and .pext attached, so users can download them from the Releases page.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to create releases
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Test and build release files
+        shell: pwsh
+        run: ./scripts/build-release.ps1
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pc-game-cover-art
+          path: dist/*
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true   # the list of changes is added below this text
+          body: |
+            ## How to install
+
+            Download **both** files from **Assets** below:
+
+            - `PCGameCoverArtExporter_*.pext`: double-click it (or drag it onto Playnite), click **Yes**, then restart Playnite.
+            - `PCGameCoverArt.scr`: right-click → **Properties** → tick **Unblock** → **OK**, then copy it into `C:\Windows\System32`.
+
+            Then open **Change screen saver** from the Start menu, choose **PCGameCoverArt**, and click **Settings…** to set it up.
+
+            Full step-by-step directions, updating, uninstalling and troubleshooting:
+            **${{ github.server_url }}/${{ github.repository }}#install**
+
+            Requires Windows 10/11 (64-bit) and Playnite 10.

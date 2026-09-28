@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CoverArtExporter/CoverArtExporter.csproj" />
+    <Project Path="src/CoverArtSaver.Core/CoverArtSaver.Core.csproj" />
+    <Project Path="src/CoverArtSaver/CoverArtSaver.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CoverArtSaver.Tests/CoverArtSaver.Tests.csproj" />
+  </Folder>
+</Solution>

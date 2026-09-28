@@ -1,0 +1,282 @@
+﻿<Window x:Class="CoverArtSaver.Windows.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PC Game Cover Art Screensaver Settings"
+        Width="620" Height="700" MinWidth="520" MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI" FontSize="13">
+
+    <!-- DataContext is a copy of SaverSettings; bindings write into it, OK saves it, Cancel discards it. -->
+    <Window.Resources>
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="Padding" Value="10,6" />
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Margin" Value="0,4" />
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,6,12,6" />
+        </Style>
+        <Style x:Key="Value" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="MinWidth" Value="56" />
+            <Setter Property="Foreground" Value="#555" />
+        </Style>
+        <Style TargetType="Slider">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Test full screen" Padding="12,4" Margin="0,0,24,0" Click="OnTestClick"
+                    ToolTip="Runs the screensaver with the settings above. Move the mouse or press a key to come back." />
+            <Button Content="OK" Width="88" Padding="0,4" Margin="0,0,8,0" IsDefault="True" Click="OnOkClick" />
+            <Button Content="Cancel" Width="88" Padding="0,4" IsCancel="True" />
+        </StackPanel>
+
+        <TabControl>
+            <!-- ================= Display ================= -->
+            <TabItem Header="Display">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <GroupBox Header="Style">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition /><RowDefinition /><RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Style="{StaticResource Label}" Text="Screensaver style" />
+                                <ComboBox Grid.Column="1" x:Name="LayoutCombo" SelectedItem="{Binding Layout}" Margin="0,4"
+                                          SelectionChanged="OnLayoutChanged" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="LayoutDescription" TextWrapping="Wrap"
+                                           Foreground="#666" FontSize="11" Margin="0,0,0,4" />
+
+                                <TextBlock Grid.Row="2" Style="{StaticResource Label}" Text="Order" />
+                                <ComboBox Grid.Row="2" Grid.Column="1" x:Name="OrderCombo" SelectedItem="{Binding Order}" Margin="0,4" />
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox x:Name="MosaicGroup" Header="Mosaic">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition /><RowDefinition /><RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Style="{StaticResource Label}" Text="Covers across the screen" />
+                                <Slider Grid.Column="1" Minimum="2" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        Value="{Binding MosaicColumns}" ValueChanged="OnMosaicColumnsChanged" />
+                                <TextBlock Grid.Column="2" Style="{StaticResource Value}" Text="{Binding MosaicColumns}" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="MosaicRowsText" Foreground="#666" FontSize="11"
+                                           Margin="0,0,0,4" />
+
+                                <TextBlock Grid.Row="2" Style="{StaticResource Label}" Text="Time between flips" />
+                                <Slider Grid.Row="2" Grid.Column="1" Minimum="0.2" Maximum="10" TickFrequency="0.1" IsSnapToTickEnabled="True"
+                                        Value="{Binding MosaicFlipSeconds}" />
+                                <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Value}" Text="{Binding MosaicFlipSeconds, StringFormat={}{0:0.0} s}" />
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox x:Name="CoverflowGroup" Header="Coverflow">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Style="{StaticResource Label}" Text="Time on each cover" />
+                                <Slider Grid.Column="1" Minimum="1" Maximum="30" TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                        Value="{Binding SecondsPerCover}" />
+                                <TextBlock Grid.Column="2" Style="{StaticResource Value}" Text="{Binding SecondsPerCover, StringFormat={}{0:0.#} s}" />
+
+                                <TextBlock Grid.Row="1" Style="{StaticResource Label}" Text="Slide duration" />
+                                <Slider Grid.Row="1" Grid.Column="1" Minimum="0.2" Maximum="2" TickFrequency="0.1" IsSnapToTickEnabled="True"
+                                        Value="{Binding TransitionSeconds}" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource Value}" Text="{Binding TransitionSeconds, StringFormat={}{0:0.0} s}" />
+
+                                <TextBlock Grid.Row="2" Style="{StaticResource Label}" Text="Covers on each side" />
+                                <Slider Grid.Row="2" Grid.Column="1" Minimum="1" Maximum="12" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        Value="{Binding SideCovers}" />
+                                <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Value}" Text="{Binding SideCovers}" />
+
+                                <TextBlock Grid.Row="3" Style="{StaticResource Label}" Text="Side cover angle" />
+                                <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="85" TickFrequency="5" IsSnapToTickEnabled="True"
+                                        Value="{Binding SideAngle}" />
+                                <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource Value}" Text="{Binding SideAngle, StringFormat={}{0}°}" />
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="Appearance">
+                            <StackPanel>
+                                <StackPanel x:Name="CoverflowAppearance">
+                                    <CheckBox Content="Show reflections" IsChecked="{Binding ShowReflection}" />
+                                    <CheckBox Content="Show game title" IsChecked="{Binding ShowTitle}" />
+                                    <CheckBox Content="Show platform and release year under the title" IsChecked="{Binding ShowDetails}"
+                                              IsEnabled="{Binding ShowTitle}" Margin="20,4,0,4" />
+                                </StackPanel>
+                                <Grid Margin="0,6,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource Label}" Text="Cover image quality" />
+                                    <Slider Grid.Column="1" Minimum="256" Maximum="1600" TickFrequency="64" IsSnapToTickEnabled="True"
+                                            Value="{Binding TextureHeight}"
+                                            ToolTip="Higher looks sharper on 4K screens but uses more memory." />
+                                    <TextBlock Grid.Column="2" Style="{StaticResource Value}" Text="{Binding TextureHeight, StringFormat={}{0} px}" />
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Screens and input">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition /><RowDefinition /><RowDefinition />
+                                </Grid.RowDefinitions>
+                                <TextBlock Style="{StaticResource Label}" Text="Multiple monitors" />
+                                <ComboBox Grid.Column="1" x:Name="MonitorCombo" SelectedItem="{Binding MultiMonitor}" Margin="0,4"
+                                          SelectionChanged="OnMonitorModeChanged" />
+
+                                <CheckBox Grid.Row="1" Grid.Column="1" x:Name="TakeTurnsCheck" IsChecked="{Binding MonitorsTakeTurns}"
+                                          Content="Monitors take turns (one change at a time)"
+                                          ToolTip="Instead of every monitor changing at the same moment, the change moves from monitor to monitor. Only for Independent monitors: mirrored ones always change together." />
+
+                                <TextBlock Grid.Row="2" Style="{StaticResource Label}" Text="Mouse movement to exit" />
+                                <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="100" TickFrequency="2" IsSnapToTickEnabled="True"
+                                        Value="{Binding MouseMoveThreshold}" />
+                                <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Value}" Text="{Binding MouseMoveThreshold, StringFormat={}{0} px}" />
+                            </Grid>
+                        </GroupBox>
+
+                        <TextBlock TextWrapping="Wrap" Foreground="#666">
+                            Wait time and "On resume, display logon screen" are set in Windows' own Screen Saver Settings dialog.
+                        </TextBlock>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ================= Library & filters ================= -->
+            <TabItem Header="Library &amp; filters">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <GroupBox Header="Playnite library">
+                            <StackPanel>
+                                <TextBlock x:Name="LibraryStatus" TextWrapping="Wrap" Margin="0,2,0,8" />
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="Browse…" Padding="10,2" Margin="6,0,0,0" Click="OnBrowseClick" />
+                                    <TextBox x:Name="LibraryPathBox" Text="{Binding LibraryFileOverride, UpdateSourceTrigger=PropertyChanged}"
+                                             ToolTip="Leave empty to use the add-on's default location." />
+                                </DockPanel>
+                                <TextBlock Foreground="#666" FontSize="11" Margin="0,2,0,0">Custom export file (leave empty for the default)</TextBlock>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Which games">
+                            <StackPanel DataContext="{Binding Filter}">
+                                <CheckBox Content="Include games hidden in Playnite" IsChecked="{Binding IncludeHidden}" />
+                                <CheckBox Content="Installed games only" IsChecked="{Binding InstalledOnly}" />
+                                <CheckBox Content="Favorites only" IsChecked="{Binding FavoritesOnly}" />
+                                <CheckBox Content="Skip games without cover art (otherwise show a title card)" IsChecked="{Binding SkipGamesWithoutCover}" />
+                                <DockPanel Margin="0,4">
+                                    <TextBlock Text="Cover shape" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <ComboBox x:Name="ShapeCombo" SelectedValue="{Binding CoverShape}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                                              SelectionChanged="OnShapeChanged"
+                                              ToolTip="Use only covers of one shape so the screensaver looks consistent. Games without art count as vertical (they get a title card)." />
+                                </DockPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Content filter">
+                            <StackPanel DataContext="{Binding Filter}">
+                                <CheckBox x:Name="AdultCheck" FontWeight="SemiBold"
+                                          Content="Hide games with nudity or sexual content" IsChecked="{Binding ExcludeAdultContent}" />
+                                <TextBlock TextWrapping="Wrap" Foreground="#666" Margin="20,0,0,4">
+                                    A game is hidden if any of its tags, genres, features, categories or age ratings contains one of
+                                    these words (one per line, whole-word, not case-sensitive):
+                                </TextBlock>
+                                <TextBox x:Name="AdultKeywordsBox" Margin="20,0,0,6" Height="110" AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto" IsEnabled="{Binding ElementName=AdultCheck, Path=IsChecked}" />
+
+                                <CheckBox x:Name="MatureCheck" Content="Also hide everything rated Mature / 18+ (includes violence-only ratings)"
+                                          IsChecked="{Binding ExcludeMatureRatings}" />
+                                <TextBox x:Name="MatureKeywordsBox" Margin="20,0,0,6" Height="80" AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto" IsEnabled="{Binding ElementName=MatureCheck, Path=IsChecked}" />
+
+                                <Button Content="Reset word lists to defaults" HorizontalAlignment="Left" Padding="10,2" Margin="20,0,0,10"
+                                        Click="OnResetKeywordsClick" />
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition /><RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Style="{StaticResource Label}" Text="Always hide games tagged" />
+                                    <TextBox Grid.Column="1" Margin="0,3" Text="{Binding HideTag, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBlock Grid.Row="1" Style="{StaticResource Label}" Text="Always allow games tagged" />
+                                    <TextBox Grid.Row="1" Grid.Column="1" Margin="0,3" Text="{Binding ShowTag, UpdateSourceTrigger=PropertyChanged}"
+                                             ToolTip="Overrides the content filter for games it catches by mistake." />
+                                </Grid>
+                                <TextBlock TextWrapping="Wrap" Foreground="#666" FontSize="11" Margin="0,4,0,0">
+                                    Tip: in Playnite, select games → right-click → Edit → Tags to add these tags in bulk.
+                                </TextBlock>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <Border Background="#F0F4FA" Padding="10" CornerRadius="4">
+                            <TextBlock x:Name="FilterSummary" TextWrapping="Wrap" />
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ================= About ================= -->
+            <TabItem Header="About">
+                <StackPanel Margin="16">
+                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="PC Game Cover Art Screensaver" />
+                    <TextBlock x:Name="VersionText" Foreground="#666" Margin="0,2,0,12" />
+                    <TextBlock TextWrapping="Wrap">
+                        Shows your Playnite library's cover art as a classic coverflow or a flipping mosaic. Requires the
+                        "PC Game Cover Art Exporter" add-on in Playnite.
+                    </TextBlock>
+                    <TextBlock x:Name="CopyrightText" TextWrapping="Wrap" Foreground="#666" Margin="0,12,0,0" />
+                    <TextBlock Margin="0,6,0,0">
+                        <Hyperlink Click="OnLicenseClick">MIT License</Hyperlink>
+                        <Run Text="  ·  " Foreground="#999" />
+                        <Hyperlink Click="OnNoticesClick">Third-party notices</Hyperlink>
+                    </TextBlock>
+                    <TextBlock Margin="0,12,0,0">
+                        <Hyperlink x:Name="RepoLink" RequestNavigate="OnLinkClick">Project page on GitHub</Hyperlink>
+                    </TextBlock>
+                    <TextBlock Margin="0,6,0,0">
+                        <Hyperlink x:Name="DataFolderLink" RequestNavigate="OnLinkClick">Open data folder (settings, library export, log)</Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

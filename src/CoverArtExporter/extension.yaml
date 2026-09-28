@@ -1,0 +1,14 @@
+# Playnite identifies the add-on by this Id. Once people have installed it, don't change it,
+# or Playnite will treat an update as a separate add-on.
+Id: CoverArtExporter_68c44f4f-7701-4ea9-9cac-23b29fb1431d
+Name: PC Game Cover Art Exporter
+Author: ShawnPlays
+Version: 1.0.0
+Module: CoverArtExporter.dll
+Type: GenericPlugin
+Icon: icon.png
+Links:
+    - Name: GitHub
+      Url: https://github.com/ShawnPlays/pc-game-cover-art-screensaver
+    - Name: License (MIT)
+      Url: https://github.com/ShawnPlays/pc-game-cover-art-screensaver/blob/main/LICENSE

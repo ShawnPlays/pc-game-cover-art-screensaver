@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>CoverArtSaver</RootNamespace>
+    <!-- The .exe gets renamed to PCGameCoverArt.scr; Windows shows the file name in its screensaver list. -->
+    <AssemblyName>PCGameCoverArt</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Product>PC Game Cover Art Screensaver</Product>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <!--
+    Publishing settings: one self-contained file, so users don't need the .NET runtime installed
+    and Windows can launch the .scr from System32 without any DLLs beside it.
+    Use:  dotnet publish src/CoverArtSaver -c Release -r win-x64
+  -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Shown from the settings dialog's About tab, so the license travels inside the single-file .scr. -->
+    <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE" />
+    <EmbeddedResource Include="..\..\THIRD-PARTY-NOTICES.md" LogicalName="THIRD-PARTY-NOTICES.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoverArtSaver.Core\CoverArtSaver.Core.csproj" />
+  </ItemGroup>
+
+</Project>
