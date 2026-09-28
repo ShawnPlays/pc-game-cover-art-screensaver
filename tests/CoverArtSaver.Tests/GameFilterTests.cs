@@ -50,7 +50,7 @@ public class GameFilterTests
     [Fact]
     public void AdultFilterCanBeTurnedOff()
     {
-        var settings = new FilterSettings { ExcludeAdultContent = false };
+        var settings = new FilterSettings { AdultContent = ContentFilterMode.Off };
         Assert.Equal(ExclusionReason.None, Filter(settings).Evaluate(Game("x", "Nudity")));
     }
 
@@ -61,17 +61,87 @@ public class GameFilterTests
         game.AgeRatings = ["PEGI 18"];
         Assert.Equal(ExclusionReason.None, Filter().Evaluate(game));
 
-        var strict = new FilterSettings { ExcludeMatureRatings = true };
+        var strict = new FilterSettings { MatureRatings = ContentFilterMode.Hide };
         Assert.Equal(ExclusionReason.MatureRating, Filter(strict).Evaluate(game));
     }
 
     [Fact]
     public void KeywordsWithSymbolsMatch()
     {
-        var settings = new FilterSettings { ExcludeMatureRatings = true, MatureKeywords = ["ACB R18+"] };
+        var settings = new FilterSettings { MatureRatings = ContentFilterMode.Hide, MatureKeywords = ["ACB R18+"] };
         var game = Game("x");
         game.AgeRatings = ["ACB R18+"];
         Assert.Equal(ExclusionReason.MatureRating, Filter(settings).Evaluate(game));
+    }
+
+    [Fact]
+    public void AdultOnlyShowsJustAdultGames()
+    {
+        var filter = Filter(new FilterSettings { AdultContent = ContentFilterMode.Only });
+        Assert.Equal(ExclusionReason.None, filter.Evaluate(Game("x", "Nudity")));
+        Assert.Equal(ExclusionReason.NotSelectedContent, filter.Evaluate(Game("y", "Adventure")));
+    }
+
+    [Fact]
+    public void MatureOnlyShowsJustMatureGames()
+    {
+        var filter = Filter(new FilterSettings { AdultContent = ContentFilterMode.Off, MatureRatings = ContentFilterMode.Only });
+        var mature = Game("x");
+        mature.AgeRatings = ["PEGI 18"];
+        Assert.Equal(ExclusionReason.None, filter.Evaluate(mature));
+        Assert.Equal(ExclusionReason.NotSelectedContent, filter.Evaluate(Game("y", "Nudity")));
+    }
+
+    [Fact]
+    public void BothOnlyShowsGamesMatchingEither()
+    {
+        var filter = Filter(new FilterSettings { AdultContent = ContentFilterMode.Only, MatureRatings = ContentFilterMode.Only });
+        var mature = Game("m");
+        mature.AgeRatings = ["ESRB M"];
+        Assert.Equal(ExclusionReason.None, filter.Evaluate(Game("a", "Nudity")));
+        Assert.Equal(ExclusionReason.None, filter.Evaluate(mature));
+        Assert.Equal(ExclusionReason.NotSelectedContent, filter.Evaluate(Game("c", "Adventure")));
+    }
+
+    [Fact]
+    public void HideAndOnlyCombine()
+    {
+        // Mature games, but none with nudity or sexual content.
+        var filter = Filter(new FilterSettings { AdultContent = ContentFilterMode.Hide, MatureRatings = ContentFilterMode.Only });
+        var violent = Game("v");
+        violent.AgeRatings = ["ESRB M"];
+        var explicitGame = Game("e", "Nudity");
+        explicitGame.AgeRatings = ["ESRB M"];
+        Assert.Equal(ExclusionReason.None, filter.Evaluate(violent));
+        Assert.Equal(ExclusionReason.AdultContent, filter.Evaluate(explicitGame));
+        Assert.Equal(ExclusionReason.NotSelectedContent, filter.Evaluate(Game("c", "Adventure")));
+    }
+
+    [Fact]
+    public void ShowTagOverridesOnlyFilter()
+    {
+        var filter = Filter(new FilterSettings { AdultContent = ContentFilterMode.Only });
+        Assert.Equal(ExclusionReason.None, filter.Evaluate(Game("x", "Adventure", "Screensaver: Show")));
+    }
+
+    [Theory]
+    [InlineData("""{"Filter":{"ExcludeAdultContent":false,"ExcludeMatureRatings":true}}""", ContentFilterMode.Off, ContentFilterMode.Hide)]
+    [InlineData("""{"Filter":{"ExcludeAdultContent":true}}""", ContentFilterMode.Hide, ContentFilterMode.Off)]
+    [InlineData("""{"Filter":{"AdultContent":"Only","MatureRatings":"Only"}}""", ContentFilterMode.Only, ContentFilterMode.Only)]
+    public void ContentModesLoadFromOldAndNewSettingsFiles(string json, ContentFilterMode adult, ContentFilterMode mature)
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(path, json);
+            var filter = SettingsStore.Load(path).Filter;
+            Assert.Equal(adult, filter.AdultContent);
+            Assert.Equal(mature, filter.MatureRatings);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     [Fact]

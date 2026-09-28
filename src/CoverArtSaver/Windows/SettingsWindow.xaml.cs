@@ -48,6 +48,13 @@ public partial class SettingsWindow : Window
             [CoverShape.Square] = "Only square cover art",
             [CoverShape.Horizontal] = "Only horizontal cover art (landscape)",
         };
+        AdultCombo.ItemsSource = new Dictionary<ContentFilterMode, string>
+        {
+            [ContentFilterMode.Off] = "Show them",
+            [ContentFilterMode.Hide] = "Hide them",
+            [ContentFilterMode.Only] = "Show only these",
+        };
+        MatureCombo.ItemsSource = AdultCombo.ItemsSource;
         AdultKeywordsBox.Text = string.Join(Environment.NewLine, working.Filter.AdultKeywords);
         MatureKeywordsBox.Text = string.Join(Environment.NewLine, working.Filter.MatureKeywords);
 
@@ -73,6 +80,7 @@ public partial class SettingsWindow : Window
             UpdateSummary();
             UpdateSourcePanels();
             UpdateLayoutSections();
+            UpdateKeywordBoxes();
             UpdateMosaicRows(working.MosaicColumns);
         };
     }
@@ -83,6 +91,19 @@ public partial class SettingsWindow : Window
     {
         ScheduleSummary(sender, e);
         UpdateMosaicRows(working.MosaicColumns); // mosaic tiles take the shape of the chosen covers
+    }
+
+    private void OnContentModeChanged(object sender, SelectionChangedEventArgs e)
+    {
+        UpdateKeywordBoxes();
+        ScheduleSummary(sender, e);
+    }
+
+    /// <summary>The word lists only matter while their filter is on.</summary>
+    private void UpdateKeywordBoxes()
+    {
+        AdultKeywordsBox.IsEnabled = AdultCombo.SelectedValue is not ContentFilterMode.Off;
+        MatureKeywordsBox.IsEnabled = MatureCombo.SelectedValue is not ContentFilterMode.Off;
     }
 
     private void OnMonitorModeChanged(object sender, SelectionChangedEventArgs e) =>
@@ -210,6 +231,7 @@ public partial class SettingsWindow : Window
         ExclusionReason.NoCover => "without cover art",
         ExclusionReason.AdultContent => "by the nudity/sexual content filter",
         ExclusionReason.MatureRating => "rated Mature/18+",
+        ExclusionReason.NotSelectedContent => "by the \"show only\" content filter",
         ExclusionReason.WrongShape => shape switch
         {
             CoverShape.Vertical => "with horizontal or square cover art",

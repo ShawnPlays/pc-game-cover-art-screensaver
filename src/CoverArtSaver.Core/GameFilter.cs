@@ -12,6 +12,8 @@ public enum ExclusionReason
     NoCover,
     AdultContent,
     MatureRating,
+    /// <summary>A "show only" content filter is on and the game matches none of its word lists.</summary>
+    NotSelectedContent,
     WrongShape,
 }
 
@@ -39,8 +41,8 @@ public sealed class GameFilter
         this.settings = settings;
         this.fileExists = fileExists ?? File.Exists;
         this.coverAspect = coverAspect ?? (path => ImageHeader.ReadSize(path)?.Aspect);
-        adultRegex = settings.ExcludeAdultContent ? BuildWholeWordRegex(settings.AdultKeywords) : null;
-        matureRegex = settings.ExcludeMatureRatings ? BuildWholeWordRegex(settings.MatureKeywords) : null;
+        adultRegex = settings.AdultContent != ContentFilterMode.Off ? BuildWholeWordRegex(settings.AdultKeywords) : null;
+        matureRegex = settings.MatureRatings != ContentFilterMode.Off ? BuildWholeWordRegex(settings.MatureKeywords) : null;
     }
 
     public FilterResult Apply(IEnumerable<GameEntry> games)
@@ -96,14 +98,25 @@ public sealed class GameFilter
 
         if (!forceShow)
         {
-            if (adultRegex != null && game.AllTerms.Any(adultRegex.IsMatch))
+            var adult = adultRegex != null && game.AllTerms.Any(adultRegex.IsMatch);
+            var mature = matureRegex != null && game.AllTerms.Any(matureRegex.IsMatch);
+
+            if (adult && settings.AdultContent == ContentFilterMode.Hide)
             {
                 return ExclusionReason.AdultContent;
             }
 
-            if (matureRegex != null && game.AllTerms.Any(matureRegex.IsMatch))
+            if (mature && settings.MatureRatings == ContentFilterMode.Hide)
             {
                 return ExclusionReason.MatureRating;
+            }
+
+            // With both set to "show only", a game matching either list is shown.
+            var onlyAdult = settings.AdultContent == ContentFilterMode.Only;
+            var onlyMature = settings.MatureRatings == ContentFilterMode.Only;
+            if ((onlyAdult || onlyMature) && !(onlyAdult && adult) && !(onlyMature && mature))
+            {
+                return ExclusionReason.NotSelectedContent;
             }
         }
 

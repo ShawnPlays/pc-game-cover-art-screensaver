@@ -39,6 +39,17 @@ public enum MultiMonitorMode
     PrimaryOnly,
 }
 
+/// <summary>What the content filter does with the games one of its word lists matches.</summary>
+public enum ContentFilterMode
+{
+    /// <summary>The word list is ignored.</summary>
+    Off,
+    /// <summary>Matching games are left out.</summary>
+    Hide,
+    /// <summary>Only matching games are shown.</summary>
+    Only,
+}
+
 /// <summary>All user-configurable options. Saved as JSON in %LOCALAPPDATA%\PCGameCoverArt\settings.json.</summary>
 public sealed class SaverSettings
 {
@@ -137,8 +148,16 @@ public sealed class FilterSettings
         }
     }
 
-    /// <summary>The "no nudity / sexual content" switch.</summary>
-    public bool ExcludeAdultContent { get; set; } = true;
+    /// <summary>Hide (the default) or show only games with nudity or sexual content.</summary>
+    public ContentFilterMode AdultContent { get; set; } = ContentFilterMode.Hide;
+
+    /// <summary>Older settings files had a yes/no switch for hiding adult content; read it so upgrading keeps the choice.</summary>
+    [JsonInclude]
+    [JsonPropertyName("ExcludeAdultContent")]
+    private bool LegacyExcludeAdultContent
+    {
+        set => AdultContent = value ? ContentFilterMode.Hide : ContentFilterMode.Off;
+    }
 
     /// <summary>
     /// Matched as whole words, case-insensitively, against tags, genres, features, categories and
@@ -147,8 +166,15 @@ public sealed class FilterSettings
     /// </summary>
     public List<string> AdultKeywords { get; set; } = [.. DefaultAdultKeywords];
 
-    /// <summary>Optional stricter switch: also hide anything rated for adults (M / 18+), violence included.</summary>
-    public bool ExcludeMatureRatings { get; set; }
+    /// <summary>Optional: hide, or show only, anything rated for adults (M / 18+), violence included.</summary>
+    public ContentFilterMode MatureRatings { get; set; } = ContentFilterMode.Off;
+
+    [JsonInclude]
+    [JsonPropertyName("ExcludeMatureRatings")]
+    private bool LegacyExcludeMatureRatings
+    {
+        set => MatureRatings = value ? ContentFilterMode.Hide : ContentFilterMode.Off;
+    }
 
     public List<string> MatureKeywords { get; set; } = [.. DefaultMatureKeywords];
 

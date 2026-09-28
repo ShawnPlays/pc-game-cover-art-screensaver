@@ -232,19 +232,26 @@
 
                         <GroupBox Header="Content filter">
                             <StackPanel DataContext="{Binding Filter}">
-                                <CheckBox x:Name="AdultCheck" FontWeight="SemiBold"
-                                          Content="Hide games with nudity or sexual content" IsChecked="{Binding ExcludeAdultContent}" />
+                                <DockPanel Margin="0,4">
+                                    <TextBlock Text="Games with nudity or sexual content" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <ComboBox x:Name="AdultCombo" SelectedValue="{Binding AdultContent}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                                              SelectionChanged="OnContentModeChanged" />
+                                </DockPanel>
                                 <TextBlock TextWrapping="Wrap" Foreground="#666" Margin="20,0,0,4">
-                                    A game is hidden if any of its tags, genres, features, categories or age ratings contains one of
+                                    A game matches if any of its tags, genres, features, categories or age ratings contains one of
                                     these words (one per line, whole-word, not case-sensitive):
                                 </TextBlock>
                                 <TextBox x:Name="AdultKeywordsBox" Margin="20,0,0,6" Height="110" AcceptsReturn="True"
-                                         VerticalScrollBarVisibility="Auto" IsEnabled="{Binding ElementName=AdultCheck, Path=IsChecked}" />
+                                         VerticalScrollBarVisibility="Auto" />
 
-                                <CheckBox x:Name="MatureCheck" Content="Also hide everything rated Mature / 18+ (includes violence-only ratings)"
-                                          IsChecked="{Binding ExcludeMatureRatings}" />
+                                <DockPanel Margin="0,4">
+                                    <TextBlock Text="Games rated Mature / 18+ (includes violence-only ratings)" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <ComboBox x:Name="MatureCombo" SelectedValue="{Binding MatureRatings}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                                              SelectionChanged="OnContentModeChanged"
+                                              ToolTip="If both lists are set to &quot;Show only&quot;, games matching either list are shown." />
+                                </DockPanel>
                                 <TextBox x:Name="MatureKeywordsBox" Margin="20,0,0,6" Height="80" AcceptsReturn="True"
-                                         VerticalScrollBarVisibility="Auto" IsEnabled="{Binding ElementName=MatureCheck, Path=IsChecked}" />
+                                         VerticalScrollBarVisibility="Auto" />
 
                                 <Button Content="Reset word lists to defaults" HorizontalAlignment="Left" Padding="10,2" Margin="20,0,0,10"
                                         Click="OnResetKeywordsClick" />
