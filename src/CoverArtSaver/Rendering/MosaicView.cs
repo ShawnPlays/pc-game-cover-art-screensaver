@@ -55,6 +55,11 @@ internal sealed class MosaicView : Grid
         featured = settings.MosaicFeatured.Enabled
             ? [.. Enumerable.Range(0, games.Count).Where(i => FeaturedGames.Qualifies(games[i], settings.MosaicFeatured))]
             : [];
+        if (settings.MosaicFeatured.Mode == FeaturedTileMode.Random)
+        {
+            // Large tiles pick games at random whatever the order setting; seeded so mirrored monitors match.
+            new Random(seed).Shuffle(featured);
+        }
 
         Background = Brushes.Black;
         ClipToBounds = true;

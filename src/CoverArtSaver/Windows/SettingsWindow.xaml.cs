@@ -56,6 +56,11 @@ public partial class SettingsWindow : Window
             [ContentFilterMode.Only] = "Show only these",
         };
         MatureCombo.ItemsSource = AdultCombo.ItemsSource;
+        FeaturedModeCombo.ItemsSource = new Dictionary<FeaturedTileMode, string>
+        {
+            [FeaturedTileMode.BarelyPlayed] = "Games you've barely played",
+            [FeaturedTileMode.Random] = "Any game, at random",
+        };
         RatingCombo.ItemsSource = new Dictionary<RatingLimit, string>
         {
             [RatingLimit.Any] = "Any rating (don't check)",
@@ -94,8 +99,15 @@ public partial class SettingsWindow : Window
             UpdateLayoutSections();
             UpdateKeywordBoxes();
             UpdateMosaicRows(working.MosaicColumns);
+            UpdateFeaturedOptions();
         };
     }
+
+    private void OnFeaturedModeChanged(object sender, SelectionChangedEventArgs e) => UpdateFeaturedOptions();
+
+    /// <summary>Play time and rating only matter when large tiles go to games you've barely played.</summary>
+    private void UpdateFeaturedOptions() =>
+        BarelyPlayedOptions.IsEnabled = FeaturedModeCombo.SelectedValue is not FeaturedTileMode.Random;
 
     private void OnLayoutChanged(object sender, SelectionChangedEventArgs e) => UpdateLayoutSections();
 
@@ -205,8 +217,10 @@ public partial class SettingsWindow : Window
             (result.TotalExcluded > 0 ? "\nHidden: " + string.Join(", ", reasons) + "." : "");
 
         var featured = result.Included.Count(g => FeaturedGames.Qualifies(g, working.MosaicFeatured));
-        FeaturedSummary.Text = $"{featured} of the {result.Included.Count} games in the screensaver qualify." +
-            (featured == 0 ? " With none, there are no large tiles." : "");
+        FeaturedSummary.Text = working.MosaicFeatured.Mode == FeaturedTileMode.Random
+            ? $"Any of the {result.Included.Count} games in the screensaver can get a large tile."
+            : $"{featured} of the {result.Included.Count} games in the screensaver qualify." +
+              (featured == 0 ? " With none, there are no large tiles." : "");
     }
 
     /// <summary>Lists the installed soundtracks in the background, again only if the Steam folder changes.</summary>

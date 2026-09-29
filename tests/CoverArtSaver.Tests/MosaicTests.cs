@@ -268,6 +268,31 @@ public class MosaicLargeTileTests
     }
 
     [Fact]
+    public void RandomLargeTilesUseTheGivenOrderAndNeverDuplicateTheWall()
+    {
+        // Random mode: every game can be large, handed over in shuffled order.
+        int[] shuffled = [.. Enumerable.Range(0, 100).OrderBy(i => (i * 37) % 100)];
+        var planner = Planner(gameCount: 100, featured: shuffled, count: 2);
+
+        var large = planner.Pieces.Where(p => p.IsLarge).Select(p => p.GameIndex).ToList();
+        Assert.Equal(shuffled.Take(2), large);
+
+        var seenLarge = new HashSet<int>(large);
+        var seenSmall = new HashSet<int>();
+        for (var i = 0; i < 2000; i++)
+        {
+            var onScreen = planner.Pieces.Select(p => p.GameIndex).ToList();
+            Assert.Equal(onScreen.Count, onScreen.Distinct().Count()); // no game shown twice, large or small
+            planner.Next();
+            seenLarge.UnionWith(planner.Pieces.Where(p => p.IsLarge).Select(p => p.GameIndex));
+            seenSmall.UnionWith(planner.Pieces.Where(p => !p.IsLarge).Select(p => p.GameIndex));
+        }
+
+        Assert.True(seenLarge.Count > 20, "large tiles should cycle through many games");
+        Assert.NotEmpty(seenLarge.Intersect(seenSmall)); // the same game can show up either way
+    }
+
+    [Fact]
     public void WhenEveryGameIsFeaturedSmallTilesUseThemToo()
     {
         var planner = Planner(gameCount: 5, featured: [0, 1, 2, 3, 4], count: 1);

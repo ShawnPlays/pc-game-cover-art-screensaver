@@ -31,6 +31,15 @@ public class FeaturedGamesTests
     }
 
     [Fact]
+    public void RandomModeQualifiesEveryGame()
+    {
+        var settings = Settings(0, RatingLimit.OverwhelminglyPositive);
+        settings.Mode = FeaturedTileMode.Random;
+        Assert.True(FeaturedGames.Qualifies(Game(null), settings));              // play time unknown
+        Assert.True(FeaturedGames.Qualifies(Game(500, steam: 2), settings));     // played a lot, badly rated
+    }
+
+    [Fact]
     public void UnknownPlaytimeNeverQualifies() =>
         Assert.False(FeaturedGames.Qualifies(Game(null), Settings(50)));
 
@@ -87,14 +96,24 @@ public class FeaturedGamesTests
     }
 
     [Fact]
+    public void OlderSettingsFilesKeepBarelyPlayed()
+    {
+        var settings = System.Text.Json.JsonSerializer.Deserialize<SaverSettings>(
+            """{ "MosaicFeatured": { "Enabled": true, "Size": 3 } }""")!.Sanitize();
+        Assert.Equal(FeaturedTileMode.BarelyPlayed, settings.MosaicFeatured.Mode);
+    }
+
+    [Fact]
     public void SettingsAreClampedAndSurviveARoundTrip()
     {
         var settings = new SaverSettings { MosaicFeatured = { Enabled = true, Size = 20, Count = 0, MaxPlaytimeHours = -3 } }.Sanitize();
         Assert.Equal((FeaturedTileSettings.MaxSize, 1, 0), (settings.MosaicFeatured.Size, settings.MosaicFeatured.Count, settings.MosaicFeatured.MaxPlaytimeHours));
 
         settings.MosaicFeatured.MinimumRating = RatingLimit.MostlyPositive;
+        settings.MosaicFeatured.Mode = FeaturedTileMode.Random;
         var copy = settings.Clone();
         Assert.True(copy.MosaicFeatured.Enabled);
+        Assert.Equal(FeaturedTileMode.Random, copy.MosaicFeatured.Mode);
         Assert.Equal(RatingLimit.MostlyPositive, copy.MosaicFeatured.MinimumRating);
     }
 }

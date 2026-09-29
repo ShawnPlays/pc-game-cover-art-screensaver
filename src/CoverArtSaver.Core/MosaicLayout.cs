@@ -26,7 +26,10 @@ public readonly record struct MosaicPiece(int Id, int Column, int Row, int Size,
 /// </summary>
 public sealed record MosaicStep(IReadOnlyList<int> Removed, IReadOnlyList<MosaicPiece> Added);
 
-/// <summary>Which games (indices into the game list) get large tiles, how many cells across each is, and how many to show.</summary>
+/// <summary>
+/// Which games (indices into the game list, in the order large tiles should use them) get large tiles,
+/// how many cells across each is, and how many to show.
+/// </summary>
 public sealed record MosaicLargeTiles(IReadOnlyCollection<int> Games, int Size, int Count);
 
 public static class MosaicLayout
@@ -100,7 +103,7 @@ public sealed class MosaicPlanner
         largeSize = largeTiles?.Size ?? 0;
         var largeGames = largeTiles == null || largeSize < 2 || largeSize > Math.Min(columns, rows)
             ? [] // none asked for, or they wouldn't fit on this screen
-            : largeTiles.Games.Where(g => g >= 0 && g < gameCount).Distinct().Order().ToArray();
+            : largeTiles.Games.Where(g => g >= 0 && g < gameCount).Distinct().ToArray();
         var smallGames = Enumerable.Range(0, gameCount).Except(largeGames).ToArray();
         small = new GamePool(smallGames.Length > 0 ? smallGames : [.. Enumerable.Range(0, gameCount)]);
         large = new GamePool(largeGames);
@@ -119,7 +122,8 @@ public sealed class MosaicPlanner
             placed.Add(spots[rng.Next(spots.Count)]);
         }
 
-        // Fill the rest left to right, top to bottom, in list order (repeating if the library is small).
+        // Fill the rest left to right, top to bottom, in list order (repeating if the library is small),
+        // skipping games a large tile already shows when every game can be large.
         large.Skip(screen * placed.Count);
         small.Skip(screen * (columns * rows - placed.Count * largeSize * largeSize));
         foreach (var (column, row) in placed)
@@ -133,7 +137,7 @@ public sealed class MosaicPlanner
             {
                 if (!placed.Any(p => Overlaps(p.Column, p.Row, largeSize, column, row, 1)))
                 {
-                    pieces.Add(NewPiece(column, row, 1, small.TakeNext()));
+                    pieces.Add(NewPiece(column, row, 1, small.Find(g => onScreen[g] == 0) ?? small.TakeNext()));
                 }
             }
         }

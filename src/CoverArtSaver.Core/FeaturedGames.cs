@@ -12,10 +12,21 @@ public enum RatingLimit
     OverwhelminglyPositive,
 }
 
-/// <summary>Mosaic option: games you've barely played are shown as large tiles spanning several cells.</summary>
+/// <summary>Which games get the mosaic's large tiles.</summary>
+public enum FeaturedTileMode
+{
+    /// <summary>Games with little or no play time (and, optionally, a good enough rating).</summary>
+    BarelyPlayed,
+    /// <summary>Any game; large tiles pick games at random, and every game also appears as a normal tile.</summary>
+    Random,
+}
+
+/// <summary>Mosaic option: some games are shown as large tiles spanning several cells.</summary>
 public sealed class FeaturedTileSettings
 {
     public bool Enabled { get; set; }
+
+    public FeaturedTileMode Mode { get; set; } = FeaturedTileMode.BarelyPlayed;
 
     /// <summary>A large tile is this many cells wide and this many tall.</summary>
     public int Size { get; set; } = 3;
@@ -41,10 +52,12 @@ public sealed class FeaturedTileSettings
 /// <summary>Decides which games get a large tile in the mosaic.</summary>
 public static class FeaturedGames
 {
+    /// <summary>In <see cref="FeaturedTileMode.Random"/> mode every game qualifies; play time and rating aren't checked.</summary>
     public static bool Qualifies(GameEntry game, FeaturedTileSettings settings) =>
-        game.PlaytimeSeconds is long seconds
-        && (settings.MaxPlaytimeHours == 0 ? seconds == 0 : seconds <= settings.MaxPlaytimeHours * 3600L)
-        && MeetsRating(game, settings.MinimumRating);
+        settings.Mode == FeaturedTileMode.Random
+        || (game.PlaytimeSeconds is long seconds
+            && (settings.MaxPlaytimeHours == 0 ? seconds == 0 : seconds <= settings.MaxPlaytimeHours * 3600L)
+            && MeetsRating(game, settings.MinimumRating));
 
     /// <summary>
     /// Steam games use Steam's own rating. Playnite games use the Community Score (or the Critic Score if there's
