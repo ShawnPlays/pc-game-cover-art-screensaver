@@ -11,7 +11,7 @@
     <RootNamespace>CoverArtExporter</RootNamespace>
     <UseWPF>true</UseWPF>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <Nullable>disable</Nullable>
     <!-- Lets the project build on non-Windows CI/dev boxes too. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>

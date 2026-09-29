@@ -332,13 +332,65 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- ================= Music ================= -->
+            <TabItem Header="Music">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12" DataContext="{Binding Music}">
+                        <GroupBox Header="Steam soundtracks">
+                            <StackPanel>
+                                <CheckBox x:Name="MusicCheck" IsChecked="{Binding Enabled}"
+                                          Content="Play my installed Steam soundtracks while the screensaver runs" />
+
+                                <StackPanel Margin="20,0,0,0" IsEnabled="{Binding IsChecked, ElementName=MusicCheck}">
+                                    <CheckBox x:Name="ShuffleCheck" Content="Shuffle" IsChecked="{Binding Shuffle}"
+                                              ToolTip="Plays every track once in a random order, then reshuffles. Off: album by album, in track order." />
+                                    <CheckBox Content="Start at a random track" IsChecked="{Binding StartAtRandomTrack}"
+                                              ToolTip="Without shuffle, start somewhere random instead of at the first track, then carry on in order. With shuffle on, the first track is always random.">
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsChecked, ElementName=ShuffleCheck}" Value="True">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+
+                                    <Grid Margin="0,4,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Style="{StaticResource Label}" Text="Volume" />
+                                        <Slider Grid.Column="1" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"
+                                                Value="{Binding Volume}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource Value}" Text="{Binding Volume, StringFormat={}{0}%}" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <TextBlock x:Name="MusicStatus" TextWrapping="Wrap" Margin="0,8,0,4" />
+                                <TextBlock TextWrapping="Wrap" Foreground="#666" FontSize="11">
+                                    The music always comes from Steam, even when your games come from Playnite, because Playnite
+                                    doesn't keep track of soundtracks. Soundtracks you own appear in your Steam library and install
+                                    like games. It plays in full screen and with Test full screen, but not in the small preview in
+                                    Windows' Screen Saver Settings.
+                                </TextBlock>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- ================= About ================= -->
             <TabItem Header="About">
                 <StackPanel Margin="16">
                     <TextBlock FontSize="18" FontWeight="SemiBold" Text="PC Game Cover Art Screensaver" />
                     <TextBlock x:Name="VersionText" Foreground="#666" Margin="0,2,0,12" />
                     <TextBlock TextWrapping="Wrap">
-                        Shows the cover art from your Playnite or Steam library as a classic coverflow or a flipping mosaic.
+                        Shows the cover art from your Playnite or Steam library as a classic coverflow or a flipping mosaic,
+                        optionally with your installed Steam soundtracks playing.
                         Playnite needs the "PC Game Cover Art Exporter" add-on; Steam needs nothing extra.
                     </TextBlock>
                     <TextBlock x:Name="CopyrightText" TextWrapping="Wrap" Foreground="#666" Margin="0,12,0,0" />

@@ -25,6 +25,7 @@ public partial class SettingsWindow : Window
     private string? loadedLibraryKey;
     private CoverSizeCache? coverSizes;
     private bool measuringCovers;
+    private string? musicFolderKey;
 
     public SettingsWindow(SaverSettings settings)
     {
@@ -166,6 +167,7 @@ public partial class SettingsWindow : Window
     private void UpdateSummary()
     {
         CommitKeywordLists();
+        UpdateMusicStatus();
 
         // Only re-read when something that changes the game list changes. The cover shape is included because
         // it decides which of Steam's images each game uses.
@@ -205,6 +207,25 @@ public partial class SettingsWindow : Window
         var featured = result.Included.Count(g => FeaturedGames.Qualifies(g, working.MosaicFeatured));
         FeaturedSummary.Text = $"{featured} of the {result.Included.Count} games in the screensaver qualify." +
             (featured == 0 ? " With none, there are no large tiles." : "");
+    }
+
+    /// <summary>Lists the installed soundtracks in the background, again only if the Steam folder changes.</summary>
+    private async void UpdateMusicStatus()
+    {
+        var key = working.SteamFolderOverride ?? "";
+        if (key == musicFolderKey)
+        {
+            return;
+        }
+
+        musicFolderKey = key;
+        MusicStatus.Text = "Looking for Steam soundtracks…";
+        var snapshot = working.Clone();
+        var scan = await Task.Run(() => SteamSoundtracks.Scan(snapshot));
+        if (key == musicFolderKey) // otherwise a newer lookup has started
+        {
+            MusicStatus.Text = scan.Status;
+        }
     }
 
     /// <summary>The first time, reading thousands of image headers takes a few seconds, so do it off the UI thread.</summary>

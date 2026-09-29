@@ -8,6 +8,8 @@ A Windows 10/11 screensaver that shows the cover art from your [Playnite](https:
 - **Coverflow:** covers slide past in 3D, with angled side covers and reflections.
 - **Mosaic:** a wall of covers that flip over one at a time, like the iTunes Album Artwork screensaver.
 
+New in 1.3.0: it can also play the game soundtracks you've installed through Steam while it runs. See [Music](#music).
+
 **[Download and install](#install)**
 
 <!-- Add a screenshot or GIF here once you have one: ![screenshot](docs/screenshot.png) -->
@@ -17,6 +19,8 @@ A Windows 10/11 screensaver that shows the cover art from your [Playnite](https:
 - Smooth 3D coverflow with reflections, rendered with WPF
 - **Mosaic style**, like iTunes' Album Artwork screensaver: a wall of covers that flip over one at a time. You choose how many covers go across; the number of rows follows your screen's shape
 - **Backlog spotlight** (mosaic, optional): games you've barely played get large tiles, 2×2 up to 6×6, that move around the wall as they flip. You choose how many (1–4), the most hours played that still counts (0 = never played), and a minimum review rating in Steam's terms (Mixed up to Overwhelmingly Positive). For Playnite that's the Community Score, or the Critic Score if there's none
+- **[Music](#music)** (optional): plays the soundtracks you've installed through Steam while the screensaver runs, with
+  shuffle, start at a random track, and volume. It always uses Steam, even when your games come from Playnite
 - Works with **Playnite** (all your launchers in one library, through a small add-on) or **Steam** (read directly from
   Steam's own files, with nothing extra to install). No internet connection, account login or API keys
 - Standard screensaver behavior: full screen on every monitor, live preview in Windows' Screen Saver Settings, and a settings dialog
@@ -43,6 +47,8 @@ The screensaver can get your games from either Playnite or Steam. You choose whi
 - **Steam** needs no add-on. The screensaver reads the cover art Steam has already downloaded for your library, plus
   Steam's own records of game details, installed games, collections and when you last played. Steam doesn't need to
   be running.
+- **Music**, if you turn it on, always comes from the soundtracks installed through Steam, whichever source the covers
+  come from.
 
 ## Install
 
@@ -108,7 +114,8 @@ To check that it works: in Playnite, open the main menu (☰) → **Extensions**
 2. Under **Screen saver**, choose **PCGameCoverArt**.
 3. Click **Settings…**. On the **Library & filters** tab, set **Get games from** to **Playnite** or **Steam**. Then pick
    the style (Coverflow or Mosaic), filters and other options, and click **OK**. With Mosaic, you can also turn on
-   large tiles for games you've barely played, on the **Display** tab.
+   large tiles for games you've barely played, on the **Display** tab. To hear your Steam soundtracks while it runs,
+   turn them on on the **Music** tab.
 4. Set **Wait** to how many idle minutes to wait before it starts. Tick **On resume, display logon screen** if you
    want your PC to lock when you come back.
 5. Click **Preview** to try it. Move the mouse or press a key to stop it.
@@ -133,6 +140,16 @@ You don't need to uninstall anything first. Your settings are kept, and any new 
    then right-click it → **Install**.
 5. **Check the version.** Open Screen Saver Settings → **Settings…** → **About**. In Playnite, the add-on's version
    is under main menu (☰) → **Add-ons…** → **Installed** → **Generic**.
+
+#### Notes for version 1.3.0
+
+- New in 1.3.0: the screensaver can play the soundtracks you've installed through Steam, with shuffle, start at a
+  random track, and volume. Turn it on under **Settings… → Music**. It's off until you do. See [Music](#music) for
+  how to set it up.
+- The music always comes from Steam, even if your games come from Playnite, so Playnite users need Steam installed
+  (with some soundtracks) to use it.
+- Nothing changed in the Playnite add-on apart from its version number. Updating it is optional, unless you're coming
+  from a version before 1.2.0 (see below).
 
 #### Notes for version 1.2.0
 
@@ -162,10 +179,47 @@ You don't need to uninstall anything first. Your settings are kept, and any new 
 | A Steam game is missing, or shows a title card instead of its cover | Steam hasn't downloaded its artwork yet. Open your library in Steam and scroll past the game, then start the screensaver again. |
 | The wrong Steam account's games appear | The screensaver uses the account that signed in to Steam most recently. Sign in to Steam with the account you want once. |
 | Mosaic shows no large tiles | Under **Settings… → Display → Mosaic**, the line below the large tile options says how many games qualify. If it's 0, raise **Played for at most** or lower **Review rating**. Playnite users: update the add-on (see [Upgrade](#upgrade-from-an-earlier-version)) and use **Export library for screensaver now**. Playnite games also need a Community or Critic Score, which comes from downloading metadata. |
+| No music plays | Open **Settings… → Music**. The line under the options says how many soundtracks were found. Soundtracks have to be installed in Steam: in your Steam library, pick **Soundtracks** in the filter, then install the ones you want. Music doesn't play in the small preview in Screen Saver Settings, only in full screen. |
 | Windows says the file is in use when you replace `PCGameCoverArt.scr` | Close Screen Saver Settings (its preview is running the old version) and try again. |
 | **PCGameCoverArt** isn't in Windows' list | Check that `PCGameCoverArt.scr` is in `C:\Windows\System32`, then reopen Screen Saver Settings. |
 | It doesn't start, or closes immediately | Unblock the file (step 3.1) and copy it again. |
 | Something else | Look in `%LOCALAPPDATA%\PCGameCoverArt\screensaver.log` and include it when you [open an issue](../../issues). |
+
+## Music
+
+The screensaver can play the game soundtracks you've installed through Steam while it runs. It's off until you turn
+it on.
+
+### Set it up
+
+1. **Install some soundtracks in Steam.** Soundtracks you own (bought on their own, or included with a game's special
+   edition) are listed in your Steam library. Choose **Soundtracks** in the filter at the top of the library list, then
+   install the ones you want, just like a game. Steam puts them in `steamapps\music` in your Steam library folder.
+2. **Turn on the music.** Open Screen Saver Settings → **Settings…** → **Music** tab, tick **Play my installed Steam
+   soundtracks while the screensaver runs**, and click **OK**. The line under the options says how many tracks and
+   soundtracks it found.
+3. **Try it.** Click **Test full screen** in the settings, or **Preview** in Screen Saver Settings. Move the mouse or
+   press a key to stop.
+
+### Options
+
+| Option | What it does |
+|---|---|
+| **Shuffle** (on by default) | Plays every track once in a random order, then reshuffles. The same track never plays twice in a row. |
+| **Start at a random track** | With shuffle off, the music plays album by album in track order. This starts it somewhere random instead of at the first track, then carries on in order. It's greyed out while Shuffle is on, because shuffle already starts on a random track. |
+| **Volume** | 0–100%. The music fades in over the first few seconds. |
+
+### Good to know
+
+- **It always uses Steam**, even when your games come from Playnite, because Playnite doesn't keep track of
+  soundtracks. Steam doesn't need to be running. If Steam is installed somewhere unusual, choose its folder under
+  **Library & filters**; the music uses that setting too.
+- **All your Steam library folders** are included, on every drive.
+- **One copy of each track.** Many soundtracks come in several formats at once (MP3, FLAC and WAV). The screensaver
+  plays one format per album, MP3 when there is one, so you don't hear every track two or three times.
+- It plays MP3, FLAC, M4A, WMA and WAV files. Files Windows can't play are skipped.
+- The music plays once however many monitors you have, and stops as soon as the screensaver closes.
+- The small preview picture in Screen Saver Settings stays silent.
 
 ## About the content filter
 

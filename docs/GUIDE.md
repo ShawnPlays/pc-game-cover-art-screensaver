@@ -139,6 +139,7 @@ share nothing but the JSON file, which is why this split works.
 | `CoverflowMath.cs` | **The coverflow effect in about 40 lines.** `PositionAt(time)` gives the current (fractional) centre index. `PoseFor(offset)` places each cover: the centre one faces you, covers in the first step turn gradually, and the rest sit at a fixed angle with tight spacing. |
 | `LibraryLoader.cs` | `LibrarySources` reads the game list from the chosen source (Playnite's export or Steam) into the same `LibraryData` shape, so filtering, ordering and both styles don't care where games came from. `LibraryLoader` then applies the filters. |
 | `Steam/SteamLibrary.cs` | **The Steam source.** Builds the game list from Steam's own files: cached artwork (`appcache\librarycache`), game details (`appinfo.vdf`), installed games (`appmanifest_*.acf`), hidden/favorites/collections (`userdata\<id>\config\cloudstorage`) and last played and play time (`localconfig.vdf`). The user review rating (`review_score`, 1–9) comes from `appinfo.vdf` too. Collections become tags, so `Screensaver: Hide` works as a Steam collection. |
+| `Steam/SteamSoundtracks.cs` | **Music.** Steam installs each soundtrack into its own folder under `steamapps\music` in a library folder. Many come in several formats at once, so it plays one format per album (MP3 first, then FLAC, M4A, WMA, WAV) and sorts tracks with numbers compared as numbers. `SoundtrackPlaylist` handles shuffle (reshuffles each round, never the same track twice in a row) and "start at a random track". Always Steam: Playnite doesn't know about soundtracks. |
 | `Steam/SteamAppInfo.cs` | Reads Steam's binary `appinfo.vdf` (format versions 27–29), decoding only the apps it's asked for |
 | `Steam/Vdf.cs` | Parser for Valve's text KeyValues format (`.vdf`, `.acf`) |
 | `Steam/SteamTags.cs` | Steam's store tag names, generated from Steam's public tag list. Steam stores tags as numbers; this turns them back into words the content filter can match. |
@@ -161,7 +162,8 @@ and rerun `/w` to see the effect.
 | `Rendering/MosaicView.cs` | The mosaic: a `Canvas` of tiles. A timer counts flips from the shared clock and asks the planner for flips a few steps ahead, so their covers are already loaded when the tile turns. Covers are decoded at tile size, not full size, with a second texture cache for large tiles. Steps where a large tile moves turn several tiles away and new ones in at the same moment. |
 | `Rendering/MosaicTile.cs` | One tile. A flip squeezes it to a sliver while darkening it, swaps the cover, and opens it back up, so it reads as a card turning over. `TurnAway` and `TurnIn` do just the first or the second half, for tiles that leave or arrive when a large tile moves. |
 | `Rendering/CoverTextureCache.cs` | Loads images on a background thread at a reduced size, which saves a lot of memory. It pre-computes each reflection by flipping and darkening pixels once, which is much cheaper than doing it live in 3D. It keeps only nearby covers in memory. |
-| `Windows/ScreensaverSession.cs` | One window per monitor, plus mirror, independent, or primary-only mode |
+| `Audio/SoundtrackPlayer.cs` | Plays the soundtracks with WPF's `MediaPlayer`: fades in over 3 seconds, moves to the next track when one ends, and skips files Windows can't play. |
+| `Windows/ScreensaverSession.cs` | One window per monitor, plus mirror, independent, or primary-only mode. It also starts the music (once, not per monitor) and stops it on exit. The small preview doesn't go through here, so it's silent. |
 | `Windows/ScreensaverWindow.cs` | Borderless topmost window. It exits on a key, a click, or a real mouse move (small jitter is ignored). |
 | `Windows/PreviewHost.cs` | Draws inside Windows' tiny preview monitor as a Win32 child window, and exits when that window goes away |
 | `Windows/SettingsWindow.xaml(.cs)` | The dialog. It edits a copy of the settings, so Cancel really cancels, and it shows live filter counts. |
@@ -190,14 +192,14 @@ To be safe, run the screensaver in `/w` mode for a while after changing the filt
 ## Stage 7: Build release files and install for real
 
 ```powershell
-./scripts/build-release.ps1 -Version 1.2.0
+./scripts/build-release.ps1 -Version 1.3.0
 ```
 
 This runs the tests and then creates:
 
 - `dist/PCGameCoverArt.scr`: one self-contained file, about 70 MB, because it bundles .NET so users don't
   need to install it
-- `dist/PCGameCoverArtExporter_1.2.0.pext`: the Playnite add-on package, which is a zip file
+- `dist/PCGameCoverArtExporter_1.3.0.pext`: the Playnite add-on package, which is a zip file
 
 The `-Version` number is stamped into both files and into the add-on's `extension.yaml`. Keep `<Version>` in both
 `.csproj` files, `extension.yaml` and `app.manifest` in step with the latest release too, so everyday builds show the right number.

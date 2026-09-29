@@ -172,8 +172,8 @@ public static class SteamLibrary
         return (latest?.FullName, null);
     }
 
-    /// <summary>App id → name for every installed app, across all Steam library folders.</summary>
-    private static Dictionary<uint, string?> ReadInstalledApps(string steamFolder)
+    /// <summary>Every folder Steam installs into: its own, plus any added under Settings → Storage.</summary>
+    internal static List<string> LibraryFolders(string steamFolder)
     {
         var libraryFolders = new List<string> { steamFolder };
         var foldersFile = Path.Combine(steamFolder, "steamapps", "libraryfolders.vdf");
@@ -184,8 +184,14 @@ public static class SteamLibrary
                 .OfType<string>());
         }
 
+        return [.. libraryFolders.Distinct(StringComparer.OrdinalIgnoreCase)];
+    }
+
+    /// <summary>App id → name for every installed app, across all Steam library folders.</summary>
+    private static Dictionary<uint, string?> ReadInstalledApps(string steamFolder)
+    {
         var installed = new Dictionary<uint, string?>();
-        foreach (var folder in libraryFolders.Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var folder in LibraryFolders(steamFolder))
         {
             var steamApps = Path.Combine(folder, "steamapps");
             if (!Directory.Exists(steamApps))

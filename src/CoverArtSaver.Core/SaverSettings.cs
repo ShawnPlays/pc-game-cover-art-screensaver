@@ -79,6 +79,10 @@ public sealed class SaverSettings
     /// <summary>Show games you've barely played as large tiles.</summary>
     public FeaturedTileSettings MosaicFeatured { get; set; } = new();
 
+    // ---- Music ----
+    /// <summary>Plays installed Steam soundtracks; always from Steam, whichever source the cover art comes from.</summary>
+    public MusicSettings Music { get; set; } = new();
+
     /// <summary>How far (in pixels) the mouse must move before the screensaver exits.</summary>
     public int MouseMoveThreshold { get; set; } = 12;
 
@@ -110,6 +114,8 @@ public sealed class SaverSettings
         MouseMoveThreshold = Math.Clamp(MouseMoveThreshold, 0, 500);
         MosaicFeatured ??= new FeaturedTileSettings();
         MosaicFeatured.Sanitize();
+        Music ??= new MusicSettings();
+        Music.Volume = Math.Clamp(Music.Volume, 0, 100);
         Filter ??= new FilterSettings();
         Filter.AdultKeywords ??= [];
         Filter.MatureKeywords ??= [];
@@ -125,6 +131,20 @@ public sealed class SaverSettings
         PropertyNameCaseInsensitive = true,
         Converters = { new JsonStringEnumConverter() },
     };
+}
+
+public sealed class MusicSettings
+{
+    public bool Enabled { get; set; }
+
+    /// <summary>Random order. Off: album by album, in track order.</summary>
+    public bool Shuffle { get; set; } = true;
+
+    /// <summary>Without shuffle, start somewhere random in the album order instead of at the first track.</summary>
+    public bool StartAtRandomTrack { get; set; }
+
+    /// <summary>0–100.</summary>
+    public int Volume { get; set; } = 40;
 }
 
 public sealed class FilterSettings

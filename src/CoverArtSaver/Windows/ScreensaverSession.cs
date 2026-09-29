@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using CoverArtSaver.Audio;
 using CoverArtSaver.Core;
 using CoverArtSaver.Interop;
 using CoverArtSaver.Rendering;
@@ -26,6 +27,7 @@ internal static class ScreensaverSession
             : NativeMethods.GetMonitors();
 
         var windows = new List<ScreensaverWindow>();
+        SoundtrackPlayer? music = null;
         var exiting = false;
         void ExitAll()
         {
@@ -35,6 +37,7 @@ internal static class ScreensaverSession
             }
 
             exiting = true;
+            music?.Stop();
             foreach (var w in windows.Where(w => !w.IsClosed))
             {
                 w.Close();
@@ -58,6 +61,7 @@ internal static class ScreensaverSession
         }
 
         windows[0].Activate(); // make sure keyboard input reaches us
+        music = SoundtrackPlayer.Start(settings); // not in the small preview, which doesn't come through here
     }
 
     internal static UIElement BuildContent(
