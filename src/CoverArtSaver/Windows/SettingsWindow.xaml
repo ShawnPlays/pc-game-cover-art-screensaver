@@ -38,6 +38,20 @@
             <Button Content="Cancel" Width="88" Padding="0,4" IsCancel="True" />
         </StackPanel>
 
+        <!-- Shown when GitHub has a newer version (see OnLoadedCheckForUpdates). -->
+        <Border DockPanel.Dock="Top" x:Name="UpdateBanner" Visibility="Collapsed" Background="#FFF6D6" BorderBrush="#E8C66A"
+                BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,10">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="UpdateNowButton" Content="Update now" Padding="10,2" Margin="8,0,0,0" Click="OnUpdateNowClick" />
+                </StackPanel>
+                <TextBlock VerticalAlignment="Center" TextWrapping="Wrap">
+                    <Run x:Name="UpdateBannerText" FontWeight="SemiBold" />
+                    <Hyperlink x:Name="UpdateNotesLink" RequestNavigate="OnLinkClick">What's new</Hyperlink>
+                </TextBlock>
+            </DockPanel>
+        </Border>
+
         <TabControl>
             <!-- ================= Display ================= -->
             <TabItem Header="Display">
@@ -419,7 +433,13 @@
             <TabItem Header="About">
                 <StackPanel Margin="16">
                     <TextBlock FontSize="18" FontWeight="SemiBold" Text="PC Game Cover Art Screensaver" />
-                    <TextBlock x:Name="VersionText" Foreground="#666" Margin="0,2,0,12" />
+                    <TextBlock x:Name="VersionText" Foreground="#666" Margin="0,2,0,6" />
+                    <CheckBox Content="Check for updates when this window opens" IsChecked="{Binding CheckForUpdates}"
+                              ToolTip="Asks GitHub whether there's a newer version. Only this window does it; the screensaver itself never goes online." />
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,12">
+                        <Button Content="Check now" Padding="10,2" Click="OnCheckNowClick" />
+                        <TextBlock x:Name="UpdateStatus" Foreground="#666" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
                     <TextBlock TextWrapping="Wrap">
                         Shows the cover art from your Playnite or Steam library as a classic coverflow or a flipping mosaic,
                         optionally with your installed Steam soundtracks playing.

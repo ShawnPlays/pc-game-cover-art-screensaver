@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.ComponentModel;
 using System.IO;
+using System.Net.Http;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,6 +29,12 @@ public partial class SettingsWindow : Window
     private bool measuringCovers;
     private string? musicFolderKey;
     private string? skipLibrariesKey;
+    private AvailableUpdate? update;
+
+    /// <summary>Long timeout because it also downloads the installer (about 70 MB); the check itself has its own.</summary>
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(10) };
+
+    private static Version CurrentVersion => typeof(SettingsWindow).Assembly.GetName().Version ?? new Version(0, 0, 0);
 
     public SettingsWindow(SaverSettings settings)
     {
@@ -101,6 +109,10 @@ public partial class SettingsWindow : Window
             UpdateKeywordBoxes();
             UpdateMosaicRows(working.MosaicColumns);
             UpdateFeaturedOptions();
+            if (working.CheckForUpdates)
+            {
+                _ = CheckForUpdatesAsync(userAsked: false);
+            }
         };
     }
 
@@ -411,6 +423,93 @@ public partial class SettingsWindow : Window
         }
 
         Close();
+    }
+
+    private void OnCheckNowClick(object sender, RoutedEventArgs e) => _ = CheckForUpdatesAsync(userAsked: true);
+
+    /// <summary>Asks GitHub for the latest release and shows the banner if it's newer. Quietly gives up if offline.</summary>
+    private async Task CheckForUpdatesAsync(bool userAsked)
+    {
+        UpdateStatus.Text = "Checking for updates…";
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            update = await UpdateCheck.CheckAsync(CurrentVersion, Http, timeout.Token);
+            if (update == null)
+            {
+                UpdateStatus.Text = "You have the latest version.";
+                return;
+            }
+
+            UpdateStatus.Text = $"Version {update.Version} is available.";
+            UpdateBannerText.Text = $"Version {update.Version} is available (you have {CurrentVersion.ToString(3)}). ";
+            UpdateNotesLink.NavigateUri = new Uri(update.ReleaseUrl);
+            UpdateNowButton.Content = update.InstallerUrl != null ? "Update now" : "Download";
+            UpdateBanner.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException or UriFormatException)
+        {
+            if (userAsked)
+            {
+                Log.Error("Update check failed", ex);
+            }
+
+            UpdateStatus.Text = "Couldn't check for updates" + (ex is TaskCanceledException ? " (no answer from GitHub)." : ": " + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Downloads the new installer and runs it. Settings are saved first, because the installer closes this window
+    /// (it can't replace the .scr while it's running).
+    /// </summary>
+    private async void OnUpdateNowClick(object sender, RoutedEventArgs e)
+    {
+        if (update?.InstallerUrl == null)
+        {
+            Process.Start(new ProcessStartInfo(update?.ReleaseUrl ?? RepositoryUrl + "/releases/latest") { UseShellExecute = true });
+            return;
+        }
+
+        UpdateNowButton.IsEnabled = false;
+        var path = Path.Combine(Path.GetTempPath(), update.InstallerName ?? "PCGameCoverArtSetup.exe");
+        try
+        {
+            using (var response = await Http.GetAsync(update.InstallerUrl, HttpCompletionOption.ResponseHeadersRead))
+            {
+                response.EnsureSuccessStatusCode();
+                var total = response.Content.Headers.ContentLength;
+                await using var source = await response.Content.ReadAsStreamAsync();
+                await using var target = File.Create(path);
+                var buffer = new byte[81920];
+                long done = 0;
+                int read;
+                while ((read = await source.ReadAsync(buffer)) > 0)
+                {
+                    await target.WriteAsync(buffer.AsMemory(0, read));
+                    done += read;
+                    UpdateNowButton.Content = total > 0 ? $"Downloading… {done * 100 / total}%" : $"Downloading… {done / 1_048_576} MB";
+                }
+            }
+
+            CommitKeywordLists();
+            SettingsStore.Save(working);
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); // asks for administrator permission
+            Close();
+        }
+        catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
+        {
+            // "No" on the administrator prompt: nothing changed, so let them try again later.
+            UpdateNowButton.Content = "Update now";
+            UpdateNowButton.IsEnabled = true;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or Win32Exception or TaskCanceledException)
+        {
+            Log.Error("Update failed", ex);
+            UpdateNowButton.Content = "Update now";
+            UpdateNowButton.IsEnabled = true;
+            MessageBox.Show(this, "Couldn't download or start the update:\n" + ex.Message +
+                "\n\nYou can download it yourself from the project's Releases page.", Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private void OnLicenseClick(object sender, RoutedEventArgs e) =>

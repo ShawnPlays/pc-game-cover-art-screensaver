@@ -83,6 +83,9 @@ public sealed class SaverSettings
     /// <summary>Plays installed Steam soundtracks; always from Steam, whichever source the cover art comes from.</summary>
     public MusicSettings Music { get; set; } = new();
 
+    /// <summary>The settings window asks GitHub whether there's a newer version. The screensaver itself never goes online.</summary>
+    public bool CheckForUpdates { get; set; } = true;
+
     /// <summary>How far (in pixels) the mouse must move before the screensaver exits.</summary>
     public int MouseMoveThreshold { get; set; } = 12;
 

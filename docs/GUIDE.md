@@ -34,6 +34,7 @@ Open **Terminal (PowerShell)** and run:
 winget install Microsoft.DotNet.SDK.10
 winget install Git.Git
 winget install GitHub.cli
+winget install JRSoftware.InnoSetup    # builds the installer (Stage 7)
 ```
 
 For an editor, pick one:
@@ -148,6 +149,7 @@ share nothing but the JSON file, which is why this split works.
 | `MosaicLayout.cs` | **The mosaic style.** `MosaicLayout.Fit` turns "N covers across" into a grid whose row count follows the screen's shape. `MosaicPlanner` picks which tile flips next (never one that's still turning) and which game it flips to (the next one in the list that isn't already on screen). It's seeded, so mirrored monitors flip identically. The wall is a list of "pieces", each 1×1 or N×N cells. A large piece that's picked moves: the planner returns a `MosaicStep` that removes it and the small tiles under its new spot, and adds normal tiles to the space it left. |
 | `FeaturedGames.cs` | Which games get large mosaic tiles. In *barely played* mode: little or no play time, and a minimum rating (Steam's rating tiers become percentage thresholds for Playnite's Community or Critic Score). It can also leave out games whose play time can't be trusted: ones added to Playnite by hand, and ones from chosen library integrations (the add-on exports each game's `Library` name and `AddedManually`). In *random* mode every game qualifies; `MosaicView` then shuffles them (seeded, so mirrored monitors match) so large tiles don't follow the Order setting, and every game can also appear as a normal tile. |
 | `SaverSettings.cs` | Every option and its default, saved as JSON |
+| `UpdateCheck.cs` | Asks GitHub's "latest release" API whether there's a newer version, and finds its installer. Only the settings window uses it, never the screensaver. |
 
 Everything here is plain .NET, so it's unit-tested in `tests/`. Try changing `SideSpacing` in `CoverflowMath.cs`
 and rerun `/w` to see the effect.
@@ -192,14 +194,18 @@ To be safe, run the screensaver in `/w` mode for a while after changing the filt
 ## Stage 7: Build release files and install for real
 
 ```powershell
-./scripts/build-release.ps1 -Version 1.3.2
+./scripts/build-release.ps1 -Version 1.4.0
 ```
 
 This runs the tests and then creates:
 
+- `dist/PCGameCoverArtSetup_1.4.0.exe`: the installer most people download. It's built by
+  [Inno Setup](https://jrsoftware.org/isinfo.php) from `installer/PCGameCoverArt.iss` (see `scripts/build-installer.ps1`);
+  install Inno Setup with `winget install JRSoftware.InnoSetup`
 - `dist/PCGameCoverArt.scr`: one self-contained file, about 70 MB, because it bundles .NET so users don't
   need to install it
-- `dist/PCGameCoverArtExporter_1.3.2.pext`: the Playnite add-on package, which is a zip file
+- `dist/PCGameCoverArtExporter_1.4.0.pext`: the Playnite add-on package, which is a zip file
+- `dist/installer.yaml`: tells Playnite's add-on browser about this version of the add-on (see *Publishing* below)
 
 The `-Version` number is stamped into both files and into the add-on's `extension.yaml`. Keep `<Version>` in both
 `.csproj` files, `extension.yaml` and `app.manifest` in step with the latest release too, so everyday builds show the right number.
@@ -279,8 +285,89 @@ still goes out without a What's new and the Actions run shows a warning. Try it 
 - Record a short GIF of the screensaver (for example with ScreenToGif) and save it as `docs/screenshot.gif`.
   Then uncomment the image line near the top of the README.
 - On the repo page, click ⚙ next to **About** and add topics: `playnite`, `screensaver`, `coverflow`, `wpf`, `windows`.
-- Optional: list the add-on in Playnite's built-in add-on browser. Its submission process is described in the
-  [PlayniteAddonDatabase](https://github.com/JosefNemec/PlayniteAddonDatabase) repository.
+
+### 8.5 Publishing: installer, updates, Playnite's add-on browser, winget and signing
+
+**What happens by itself on every release** (a `v*` tag):
+
+- The installer, `.scr`, `.pext` and `installer.yaml` are built and attached to the GitHub Release.
+- Everyone on 1.4.0 or later sees the new version in the settings window, with an **Update now** button
+  (`UpdateCheck.cs` asks GitHub's "latest release" API; the button downloads and runs the `PCGameCoverArtSetup_*.exe`
+  asset). Nothing to do.
+- `installer.yaml` is what Playnite's add-on browser reads. It's always at
+  `https://github.com/ShawnPlays/pc-game-cover-art-screensaver/releases/latest/download/installer.yaml`, and its
+  changelog comes from the README notes (`scripts/playnite-manifest.ps1`).
+
+**One-time jobs only you can do** (they need your accounts, or someone else's approval):
+
+#### List the add-on in Playnite's add-on browser
+
+Once listed, Playnite users can install the add-on from Playnite (**Add-ons… → Browse → Generic**), and Playnite
+offers them each new version automatically.
+
+1. Make sure a release with `installer.yaml` attached exists (1.4.0 or later), and that
+   `https://github.com/ShawnPlays/pc-game-cover-art-screensaver/releases/latest/download/installer.yaml` downloads.
+2. Go to <https://github.com/JosefNemec/PlayniteAddonDatabase/tree/master/addons/generic>, click **Add file → Create
+   new file**, name it `ShawnPlays_CoverArtExporter.yaml`, and paste in the contents of
+   `docs/playnite-addon-database/ShawnPlays_CoverArtExporter.yaml`.
+3. Click **Propose new file**, then **Create pull request**. Say in the description that it's the companion add-on for
+   a screensaver and link the project.
+4. Wait for the maintainer to review and merge it. Answer any questions on the pull request.
+
+After that there's nothing to do per release: each release's `installer.yaml` tells Playnite about the new version.
+If you change the add-on's name, description or links, edit the file in the database the same way.
+
+#### Publish to winget
+
+Once listed, people can run `winget install ShawnPlays.PCGameCoverArt`, and `winget upgrade --all` (or UniGetUI)
+keeps it updated.
+
+1. **First version, by hand.** After a release with an installer (1.4.0 or later):
+   ```powershell
+   winget install wingetcreate
+   ./scripts/winget-manifests.ps1 -Version 1.4.0      # writes obj\winget\1.4.0, hashing the released installer
+   winget validate --manifest obj\winget\1.4.0
+   wingetcreate submit --token <token> obj\winget\1.4.0
+   ```
+   The token is a GitHub personal access token (classic) with the **public_repo** scope; create one at
+   <https://github.com/settings/tokens>. `wingetcreate` forks `microsoft/winget-pkgs` under your account and opens a
+   pull request. Automated checks run first; a Microsoft moderator merges it, usually within a few days. Watch the
+   pull request for questions.
+2. **Every version after that, automatically.** Add the same kind of token as a repository secret named
+   `WINGET_TOKEN` (repo **Settings → Secrets and variables → Actions → New repository secret**). The workflow's
+   *Publish to winget* step then opens the pull request for each new release by itself. It's skipped while the secret
+   is missing.
+
+#### Code signing
+
+Unsigned downloads get "isn't commonly downloaded" warnings from browsers and a "Windows protected your PC" screen
+from SmartScreen. Signing removes the "unknown publisher" part and helps the file build reputation faster.
+
+The workflow already signs the `.scr` (before it goes into the installer) and the installer when these repository
+secrets exist, using [Azure Artifact Signing](https://learn.microsoft.com/azure/artifact-signing/) (formerly Trusted
+Signing, about US$10 a month):
+
+| Secret | Where it comes from |
+|---|---|
+| `AZURE_TENANT_ID` | Your Microsoft Entra tenant (Azure portal → Microsoft Entra ID → Overview) |
+| `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` | An app registration (Entra ID → App registrations → New registration; then Certificates & secrets → New client secret) |
+| `SIGNING_ENDPOINT` | The signing account's endpoint, for example `https://eus.codesigning.azure.net/` |
+| `SIGNING_ACCOUNT` | The signing account's name |
+| `SIGNING_PROFILE` | The certificate profile's name |
+
+1. In the Azure portal, create an **Artifact Signing account** (it needs an Azure subscription).
+2. Under it, complete **Identity validation** as an individual. Microsoft checks your identity; this can take a few
+   days. At the time of writing individuals must be in the USA or Canada.
+3. Create a **Certificate profile** of type **Public Trust**.
+4. Create the app registration above, and on the signing account grant it the **Artifact Signing Certificate Profile
+   Signer** role (Access control (IAM) → Add role assignment). Older pages call it *Trusted Signing Certificate
+   Profile Signer*.
+5. Add the six secrets to the repository. The next release is signed; check the Actions log for the signing steps, and
+   the `.exe`'s Properties → Digital Signatures.
+
+Free alternative: [SignPath Foundation](https://signpath.org) signs open-source projects at no cost after an
+application. It uses its own GitHub Action; if you're accepted, the two *Sign* steps in `build.yml` would be swapped
+for theirs.
 
 ---
 

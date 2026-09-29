@@ -11,7 +11,7 @@
     <AssemblyName>PCGameCoverArt</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>icon.ico</ApplicationIcon>
-    <Version>1.3.2</Version>
+    <Version>1.4.0</Version>
     <Product>PC Game Cover Art Screensaver</Product>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>

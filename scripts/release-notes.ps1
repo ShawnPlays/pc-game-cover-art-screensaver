@@ -39,16 +39,13 @@ $whatsNew = if ($notes) { "## What's new in $Version`n`n$notes`n`n" } else { '' 
 $body = @"
 $whatsNew## How to install
 
-Download from **Assets** below:
+Download **``PCGameCoverArtSetup_$Version.exe``** from **Assets** below and run it. It puts the screensaver where Windows looks for it, can make it your screensaver, and (if you use Playnite) offers to install the Playnite add-on. Then choose **Playnite** or **Steam** under **Get games from** in the settings it opens.
 
-- ``PCGameCoverArt.scr`` (everyone): right-click → **Properties** → tick **Unblock** → **OK**, then copy it into ``C:\Windows\System32``.
-- ``PCGameCoverArtExporter_$Version.pext`` (Playnite users only): double-click it (or drag it onto Playnite), click **Yes**, then restart Playnite. Steam users don't need it.
-
-Then open **Change screen saver** from the Start menu, choose **PCGameCoverArt**, click **Settings…**, and choose **Playnite** or **Steam** under **Get games from**.
+Prefer to do it by hand? ``PCGameCoverArt.scr`` and ``PCGameCoverArtExporter_$Version.pext`` are here too; see the directions linked below.
 
 ## Upgrading from an earlier version
 
-No need to uninstall; your settings are kept. Playnite users: install the new ``.pext`` first (Playnite offers to update the add-on), then restart Playnite. Close Screen Saver Settings, copy the new ``.scr`` into ``C:\Windows\System32`` and choose **Replace the file in the destination**.
+Run the new installer; your settings are kept. From 1.4.0 on, the screensaver's settings window also offers each new version with an **Update now** button. Playnite users: leave **Install or update the Playnite add-on** ticked at the end, then restart Playnite.
 Notes for every version: **$repoUrl#upgrade-from-an-earlier-version**
 
 Full step-by-step directions, uninstalling and troubleshooting:
