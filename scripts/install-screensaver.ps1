@@ -2,6 +2,7 @@
 .SYNOPSIS
   Installs PCGameCoverArt.scr so it appears in Windows' Screen Saver Settings list,
   then opens that dialog so you can select it and set the wait time.
+  Also upgrades: it replaces an older copy, and your settings are kept.
   Run from an elevated (Administrator) 64-bit PowerShell.
 
 .EXAMPLE
@@ -20,6 +21,10 @@ if (-not [Environment]::Is64BitProcess) { throw 'Please use 64-bit PowerShell; 3
 if (-not (Test-Path $Path)) { throw "Can't find $Path. Build it first with ./scripts/build-release.ps1" }
 
 $target = Join-Path $env:SystemRoot 'System32\PCGameCoverArt.scr'
+# Upgrading: Windows can't replace the file while the old version runs (Screen Saver Settings' preview runs it).
+if (Get-Process -Name 'PCGameCoverArt' -ErrorAction SilentlyContinue) {
+    throw 'The screensaver is running. Close Screen Saver Settings (and stop any preview), then run this again.'
+}
 Copy-Item $Path $target -Force
 Unblock-File $target   # remove the "downloaded from the internet" mark
 Write-Host "Installed to $target" -ForegroundColor Green

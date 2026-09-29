@@ -41,5 +41,14 @@ namespace CoverArtExporter
 
         /// <summary>E.g. "ESRB M", "PEGI 18". Used by the content filter.</summary>
         public List<string> AgeRatings { get; set; } = new List<string>();
+
+        /// <summary>Total time played. Used to spotlight games you haven't played much.</summary>
+        public long PlaytimeSeconds { get; set; }
+
+        /// <summary>0–100. Used to limit the spotlight to well-reviewed games.</summary>
+        public int? CommunityScore { get; set; }
+
+        /// <summary>0–100. Used when there's no community score.</summary>
+        public int? CriticScore { get; set; }
     }
 }

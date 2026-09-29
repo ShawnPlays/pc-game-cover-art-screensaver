@@ -16,6 +16,7 @@ A Windows 10/11 screensaver that shows the cover art from your [Playnite](https:
 
 - Smooth 3D coverflow with reflections, rendered with WPF
 - **Mosaic style**, like iTunes' Album Artwork screensaver: a wall of covers that flip over one at a time. You choose how many covers go across; the number of rows follows your screen's shape
+- **Backlog spotlight** (mosaic, optional): games you've barely played get large tiles, 2×2 up to 6×6, that move around the wall as they flip. You choose how many (1–4), the most hours played that still counts (0 = never played), and a minimum review rating in Steam's terms (Mixed up to Overwhelmingly Positive). For Playnite that's the Community Score, or the Critic Score if there's none
 - Works with **Playnite** (all your launchers in one library, through a small add-on) or **Steam** (read directly from
   Steam's own files, with nothing extra to install). No internet connection, account login or API keys
 - Standard screensaver behavior: full screen on every monitor, live preview in Windows' Screen Saver Settings, and a settings dialog
@@ -44,6 +45,8 @@ The screensaver can get your games from either Playnite or Steam. You choose whi
   be running.
 
 ## Install
+
+Already have an earlier version? Follow [Upgrade from an earlier version](#upgrade-from-an-earlier-version) instead.
 
 You need:
 
@@ -104,17 +107,40 @@ To check that it works: in Playnite, open the main menu (☰) → **Extensions**
 1. Open Screen Saver Settings: press **Start**, type **screen saver**, and choose **Change screen saver**.
 2. Under **Screen saver**, choose **PCGameCoverArt**.
 3. Click **Settings…**. On the **Library & filters** tab, set **Get games from** to **Playnite** or **Steam**. Then pick
-   the style (Coverflow or Mosaic), filters and other options, and click **OK**.
+   the style (Coverflow or Mosaic), filters and other options, and click **OK**. With Mosaic, you can also turn on
+   large tiles for games you've barely played, on the **Display** tab.
 4. Set **Wait** to how many idle minutes to wait before it starts. Tick **On resume, display logon screen** if you
    want your PC to lock when you come back.
 5. Click **Preview** to try it. Move the mouse or press a key to stop it.
 6. Click **OK**.
 
-### Update to a new version
+### Upgrade from an earlier version
 
-Download the new files from the [Releases page](../../releases/latest). If you use Playnite, install the new `.pext`
-the same way as before. Then unblock the new `.scr` and copy it into `C:\Windows\System32`. When Windows asks, choose **Replace the
-file in the destination**. Your settings are kept.
+You don't need to uninstall anything first. Your settings are kept, and any new options start switched off.
+
+1. **Download** the new files from the [Releases page](../../releases/latest), and unblock the new `.scr` as in
+   step 3.1.
+2. **Update the Playnite add-on first** (Playnite only; Steam users skip this step).
+   1. Double-click the new `PCGameCoverArtExporter_x.y.z.pext`, or drag it onto Playnite's window.
+   2. Playnite says the add-on is already installed and asks whether to update it. Click **Yes**.
+   3. Restart Playnite. The new add-on saves your library again on startup. To be sure it has, use main menu (☰) →
+      **Extensions** → **PC Game Cover Art Screensaver** → **Export library for screensaver now**.
+3. **Close Screen Saver Settings** if it's open. Its little preview runs the screensaver, and Windows won't replace a
+   file while it's running.
+4. **Replace the screensaver file.** Copy the new `PCGameCoverArt.scr` into `C:\Windows\System32`. When Windows asks,
+   choose **Replace the file in the destination**, then click **Continue** for administrator permission.
+   If you installed it without administrator rights, copy the new file over the old one in the folder you chose,
+   then right-click it → **Install**.
+5. **Check the version.** Open Screen Saver Settings → **Settings…** → **About**. In Playnite, the add-on's version
+   is under main menu (☰) → **Add-ons…** → **Installed** → **Generic**.
+
+#### Notes for version 1.2.0
+
+- New in 1.2.0: Mosaic can show games you've barely played as large tiles. Turn it on under
+  **Settings… → Display → Mosaic**.
+- **Playnite users must update the add-on** (step 2) to use large tiles. Older add-ons don't save play time or review
+  scores, so until the new add-on has saved your library, no Playnite game counts as barely played.
+- Steam users don't need to do anything extra: play time and review ratings are read from Steam's own files.
 
 ### Uninstall
 
@@ -135,6 +161,8 @@ file in the destination**. Your settings are kept.
 | **Steam wasn't found** | In **Settings… → Library & filters**, click **Browse…** next to the Steam folder and choose the folder Steam is installed in. |
 | A Steam game is missing, or shows a title card instead of its cover | Steam hasn't downloaded its artwork yet. Open your library in Steam and scroll past the game, then start the screensaver again. |
 | The wrong Steam account's games appear | The screensaver uses the account that signed in to Steam most recently. Sign in to Steam with the account you want once. |
+| Mosaic shows no large tiles | Under **Settings… → Display → Mosaic**, the line below the large tile options says how many games qualify. If it's 0, raise **Played for at most** or lower **Review rating**. Playnite users: update the add-on (see [Upgrade](#upgrade-from-an-earlier-version)) and use **Export library for screensaver now**. Playnite games also need a Community or Critic Score, which comes from downloading metadata. |
+| Windows says the file is in use when you replace `PCGameCoverArt.scr` | Close Screen Saver Settings (its preview is running the old version) and try again. |
 | **PCGameCoverArt** isn't in Windows' list | Check that `PCGameCoverArt.scr` is in `C:\Windows\System32`, then reopen Screen Saver Settings. |
 | It doesn't start, or closes immediately | Unblock the file (step 3.1) and copy it again. |
 | Something else | Look in `%LOCALAPPDATA%\PCGameCoverArt\screensaver.log` and include it when you [open an issue](../../issues). |

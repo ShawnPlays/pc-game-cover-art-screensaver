@@ -48,7 +48,12 @@ jobs:
 
             Then open **Change screen saver** from the Start menu, choose **PCGameCoverArt**, click **Settings…**, and choose **Playnite** or **Steam** under **Get games from**.
 
-            Full step-by-step directions, updating, uninstalling and troubleshooting:
+            ## Upgrading from an earlier version
+
+            No need to uninstall; your settings are kept. Playnite users: install the new `.pext` first (Playnite offers to update the add-on), then restart Playnite. Close Screen Saver Settings, copy the new `.scr` into `C:\Windows\System32` and choose **Replace the file in the destination**.
+            Version-specific notes: **${{ github.server_url }}/${{ github.repository }}#upgrade-from-an-earlier-version**
+
+            Full step-by-step directions, uninstalling and troubleshooting:
             **${{ github.server_url }}/${{ github.repository }}#install**
 
             Requires Windows 10/11 (64-bit), and Playnite 10 or Steam.

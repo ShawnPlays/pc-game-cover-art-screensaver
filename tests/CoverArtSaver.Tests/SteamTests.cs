@@ -124,6 +124,25 @@ public class SteamLibraryTests : IDisposable
     }
 
     [Fact]
+    public void ReadsPlaytimeAndReviewRating()
+    {
+        steam.AddGame(1, "Played", playtimeMinutes: 90, reviewScore: 9);
+        steam.AddGame(2, "Never played", reviewScore: 6);
+        steam.AddGame(3, "Unrated", lastPlayed: 1712964079);
+        steam.Write();
+
+        var games = SteamLibrary.Read(steam.Folder, CoverShape.All).Library.Games.ToDictionary(g => g.Name);
+
+        Assert.Equal(90 * 60, games["Played"].PlaytimeSeconds);
+        Assert.Equal(9, games["Played"].SteamReviewScore);
+        Assert.Equal(0, games["Never played"].PlaytimeSeconds); // not in localconfig.vdf at all
+        Assert.Equal(6, games["Never played"].SteamReviewScore);
+        Assert.Equal(0, games["Unrated"].PlaytimeSeconds);
+        Assert.Null(games["Unrated"].SteamReviewScore);
+        Assert.NotNull(games["Unrated"].LastActivity);
+    }
+
+    [Fact]
     public void InstalledAppsWithoutDetailsAreStillShown()
     {
         steam.AddApp(99, null, installed: true, manifestName: "Old Game"); // not in appinfo.vdf
@@ -158,10 +177,15 @@ public sealed class FakeSteam : IDisposable
 
     private readonly Dictionary<uint, long> lastPlayed = [];
 
+    private readonly Dictionary<uint, long> playtime = [];
+
     public void AddGame(uint id, string name, bool installed = false, bool newLayout = false, long lastPlayed = 0,
-        int[]? tags = null, string[]? descriptors = null, string[]? genres = null, long year = 0)
+        int[]? tags = null, string[]? descriptors = null, string[]? genres = null, long year = 0,
+        long playtimeMinutes = 0, int reviewScore = 0)
     {
         var common = new Kv { ["name"] = name, ["type"] = "game" };
+        if (reviewScore != 0) common["review_score"] = reviewScore;
+        if (playtimeMinutes != 0) playtime[id] = playtimeMinutes;
         if (tags != null) common["store_tags"] = Indexed(tags.Select(t => (object)t));
         if (descriptors != null) common["content_descriptors"] = Indexed(descriptors);
         if (genres != null) common["genres"] = Indexed(genres);
@@ -211,7 +235,8 @@ public sealed class FakeSteam : IDisposable
         WriteFile(Path.Combine(Folder, "config", "loginusers.vdf"),
             $"\"users\"\n{{\n\t\"{SteamId64}\"\n\t{{\n\t\t\"PersonaName\"\t\"Tester\"\n\t\t\"MostRecent\"\t\"1\"\n\t}}\n}}\n");
 
-        var played = string.Join("\n", lastPlayed.Select(p => $"\"{p.Key}\" {{ \"LastPlayed\" \"{p.Value}\" }}"));
+        var played = string.Join("\n", lastPlayed.Keys.Union(playtime.Keys).Select(id =>
+            $"\"{id}\" {{ \"LastPlayed\" \"{lastPlayed.GetValueOrDefault(id)}\" \"Playtime\" \"{playtime.GetValueOrDefault(id)}\" }}"));
         WriteFile(Path.Combine(UserConfig, "localconfig.vdf"),
             $"\"UserLocalConfigStore\" {{ \"Software\" {{ \"Valve\" {{ \"Steam\" {{ \"apps\" {{ {played} }} }} }} }} }}");
 

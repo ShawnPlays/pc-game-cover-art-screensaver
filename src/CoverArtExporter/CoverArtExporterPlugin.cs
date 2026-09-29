@@ -165,6 +165,9 @@ namespace CoverArtExporter
                 Features = Names(g.Features?.Select(x => x.Name)),
                 Categories = Names(g.Categories?.Select(x => x.Name)),
                 AgeRatings = Names(g.AgeRatings?.Select(x => x.Name)),
+                PlaytimeSeconds = (long)g.Playtime,
+                CommunityScore = g.CommunityScore,
+                CriticScore = g.CriticScore,
             }).ToList();
         }
 

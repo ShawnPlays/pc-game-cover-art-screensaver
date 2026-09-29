@@ -138,13 +138,14 @@ share nothing but the JSON file, which is why this split works.
 | `GameFilter.cs` | **The content filter.** It compiles your keyword list into one regex with whole-word boundaries, so `Sexual` matches "Strong Sexual Content" but not "Asexual". Rules are checked in priority order: Hide tag, then hidden, installed, favorites, and missing cover, then the adult and mature filters. The Show tag skips only the adult and mature filters. |
 | `CoverflowMath.cs` | **The coverflow effect in about 40 lines.** `PositionAt(time)` gives the current (fractional) centre index. `PoseFor(offset)` places each cover: the centre one faces you, covers in the first step turn gradually, and the rest sit at a fixed angle with tight spacing. |
 | `LibraryLoader.cs` | `LibrarySources` reads the game list from the chosen source (Playnite's export or Steam) into the same `LibraryData` shape, so filtering, ordering and both styles don't care where games came from. `LibraryLoader` then applies the filters. |
-| `Steam/SteamLibrary.cs` | **The Steam source.** Builds the game list from Steam's own files: cached artwork (`appcache\librarycache`), game details (`appinfo.vdf`), installed games (`appmanifest_*.acf`), hidden/favorites/collections (`userdata\<id>\config\cloudstorage`) and last played (`localconfig.vdf`). Collections become tags, so `Screensaver: Hide` works as a Steam collection. |
+| `Steam/SteamLibrary.cs` | **The Steam source.** Builds the game list from Steam's own files: cached artwork (`appcache\librarycache`), game details (`appinfo.vdf`), installed games (`appmanifest_*.acf`), hidden/favorites/collections (`userdata\<id>\config\cloudstorage`) and last played and play time (`localconfig.vdf`). The user review rating (`review_score`, 1–9) comes from `appinfo.vdf` too. Collections become tags, so `Screensaver: Hide` works as a Steam collection. |
 | `Steam/SteamAppInfo.cs` | Reads Steam's binary `appinfo.vdf` (format versions 27–29), decoding only the apps it's asked for |
 | `Steam/Vdf.cs` | Parser for Valve's text KeyValues format (`.vdf`, `.acf`) |
 | `Steam/SteamTags.cs` | Steam's store tag names, generated from Steam's public tag list. Steam stores tags as numbers; this turns them back into words the content filter can match. |
 | `CoverSizes.cs` | For the cover shape option (`CoverShape.cs` decides what counts as vertical, square or horizontal). `ImageHeader` reads an image's width and height from its first bytes (JPEG, PNG, GIF, BMP, WebP) without decoding it. `CoverSizeCache` remembers the results in `cover-sizes.json`, so only new or changed covers are read again. |
 | `MonitorTurn.cs` | "Monitors take turns". Every monitor works out, from the same seed, which steps of the shared schedule are its own, so only one monitor changes at a time without the windows talking to each other. Each round is shuffled, and the same monitor never goes twice in a row. |
-| `MosaicLayout.cs` | **The mosaic style.** `MosaicLayout.Fit` turns "N covers across" into a grid whose row count follows the screen's shape. `MosaicPlanner` picks which tile flips next (never one that's still turning) and which game it flips to (the next one in the list that isn't already on screen). It's seeded, so mirrored monitors flip identically. |
+| `MosaicLayout.cs` | **The mosaic style.** `MosaicLayout.Fit` turns "N covers across" into a grid whose row count follows the screen's shape. `MosaicPlanner` picks which tile flips next (never one that's still turning) and which game it flips to (the next one in the list that isn't already on screen). It's seeded, so mirrored monitors flip identically. The wall is a list of "pieces", each 1×1 or N×N cells. A large piece that's picked moves: the planner returns a `MosaicStep` that removes it and the small tiles under its new spot, and adds normal tiles to the space it left. |
+| `FeaturedGames.cs` | Which games get large mosaic tiles: little or no play time, and a minimum rating. Steam's rating tiers become percentage thresholds for Playnite's Community (or Critic) Score. |
 | `SaverSettings.cs` | Every option and its default, saved as JSON |
 
 Everything here is plain .NET, so it's unit-tested in `tests/`. Try changing `SideSpacing` in `CoverflowMath.cs`
@@ -157,8 +158,8 @@ and rerun `/w` to see the effect.
 | `App.xaml.cs` | Entry point: chooses the mode |
 | `Rendering/CoverflowView.cs` | A WPF `Viewport3D` with a camera. Every frame (`CompositionTarget.Rendering`), it creates or removes cover "slots" near the centre and moves them with `PoseFor`. Covers are re-sorted back-to-front so the fading edge covers blend correctly. |
 | `Rendering/CoverSlot.cs` | One cover is two textured rectangles: the front, and the reflection hanging below it |
-| `Rendering/MosaicView.cs` | The mosaic: a `Canvas` of tiles. A timer counts flips from the shared clock and asks the planner for flips a few steps ahead, so their covers are already loaded when the tile turns. Covers are decoded at tile size, not full size. |
-| `Rendering/MosaicTile.cs` | One tile. A flip squeezes it to a sliver while darkening it, swaps the cover, and opens it back up, so it reads as a card turning over. |
+| `Rendering/MosaicView.cs` | The mosaic: a `Canvas` of tiles. A timer counts flips from the shared clock and asks the planner for flips a few steps ahead, so their covers are already loaded when the tile turns. Covers are decoded at tile size, not full size, with a second texture cache for large tiles. Steps where a large tile moves turn several tiles away and new ones in at the same moment. |
+| `Rendering/MosaicTile.cs` | One tile. A flip squeezes it to a sliver while darkening it, swaps the cover, and opens it back up, so it reads as a card turning over. `TurnAway` and `TurnIn` do just the first or the second half, for tiles that leave or arrive when a large tile moves. |
 | `Rendering/CoverTextureCache.cs` | Loads images on a background thread at a reduced size, which saves a lot of memory. It pre-computes each reflection by flipping and darkening pixels once, which is much cheaper than doing it live in 3D. It keeps only nearby covers in memory. |
 | `Windows/ScreensaverSession.cs` | One window per monitor, plus mirror, independent, or primary-only mode |
 | `Windows/ScreensaverWindow.cs` | Borderless topmost window. It exits on a key, a click, or a real mouse move (small jitter is ignored). |
@@ -189,14 +190,17 @@ To be safe, run the screensaver in `/w` mode for a while after changing the filt
 ## Stage 7: Build release files and install for real
 
 ```powershell
-./scripts/build-release.ps1 -Version 1.0.0
+./scripts/build-release.ps1 -Version 1.2.0
 ```
 
 This runs the tests and then creates:
 
 - `dist/PCGameCoverArt.scr`: one self-contained file, about 70 MB, because it bundles .NET so users don't
   need to install it
-- `dist/PCGameCoverArtExporter_1.0.0.pext`: the Playnite add-on package, which is a zip file
+- `dist/PCGameCoverArtExporter_1.2.0.pext`: the Playnite add-on package, which is a zip file
+
+The `-Version` number is stamped into both files and into the add-on's `extension.yaml`. Keep `<Version>` in both
+`.csproj` files, `extension.yaml` and `app.manifest` in step with the latest release too, so everyday builds show the right number.
 
 To install:
 
@@ -208,6 +212,12 @@ To install:
    (Or just right-click the `.scr` → **Install**.)
 
 ✅ **Check:** the small preview monitor in the dialog animates, and **Preview** runs full screen.
+
+To install a newer build over an older one, do the same two steps; there's no need to uninstall first. Playnite
+offers to update the add-on, and a restart makes it export again. Close Screen Saver Settings before running the
+install script: its preview keeps the old `.scr` running, and Windows can't replace a running file. The script
+checks for this. When a release changes what the add-on exports (1.2.0 added play time and review scores), say in
+the README's *Notes for version x.y.z* that Playnite users must update the add-on.
 
 ---
 
@@ -278,4 +288,4 @@ For later versions, commit your changes, push, and tag `v1.1.0`. There's nothing
 - Arrow keys to flip covers manually in `/w` mode
 - Blurred background art behind the centre cover
 - Show only games from selected platforms or sources
-- Add a "Playtime" order (you'd need to export `Playtime` from the add-on first; follow `LastActivity` as a model)
+- Add a "Most played" order (`GameEntry.PlaytimeSeconds` is already filled in for both Playnite and Steam)

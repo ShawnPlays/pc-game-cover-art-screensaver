@@ -8,8 +8,9 @@ using CoverArtSaver.Core;
 namespace CoverArtSaver.Rendering;
 
 /// <summary>
-/// One cell of the mosaic. A flip squeezes the tile to a sliver (as if turning edge-on), swaps the cover,
-/// and opens it back up, darkening as it turns away so it reads as a 3D card flip.
+/// One tile of the mosaic: a single cell, or a square of cells for a large tile. A flip squeezes the tile to a
+/// sliver (as if turning edge-on), swaps the cover, and opens it back up, darkening as it turns away so it reads
+/// as a 3D card flip.
 /// </summary>
 internal sealed class MosaicTile
 {
@@ -26,6 +27,9 @@ internal sealed class MosaicTile
     public Border Element { get; }
 
     public GameEntry? Game { get; private set; }
+
+    /// <summary>Where on the grid this tile sits, and how many cells it spans.</summary>
+    public MosaicPiece Piece { get; set; }
 
     public MosaicTile()
     {
@@ -80,26 +84,49 @@ internal sealed class MosaicTile
         Game = game;
         midFlip = true;
         incoming = texture?.Front;
-        var generation = ++flipGeneration;
         var half = TimeSpan.FromSeconds(seconds / 2);
-
-        var close = new DoubleAnimation(0, half) { EasingFunction = new SineEase { EasingMode = EasingMode.EaseIn } };
-        close.Completed += (_, _) =>
+        TurnEdgeOn(half, () =>
         {
-            if (generation != flipGeneration)
-            {
-                return; // a newer flip took over this tile
-            }
-
             midFlip = false;
             SetImage(incoming);
             turn.BeginAnimation(ScaleTransform.ScaleXProperty,
                 new DoubleAnimation(0, 1, half) { EasingFunction = new SineEase { EasingMode = EasingMode.EaseOut } });
             shade.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(TurnedAwayShade, 0, half));
+        });
+    }
+
+    /// <summary>
+    /// For a tile taking over space other tiles had: starts edge-on and opens up halfway through a flip,
+    /// just as those tiles finish turning away.
+    /// </summary>
+    public void TurnIn(GameEntry game, CoverTexture? texture, double seconds)
+    {
+        turn.ScaleX = 0;
+        shade.Opacity = TurnedAwayShade;
+        FlipTo(game, texture, seconds); // the first half turns from edge-on to edge-on, i.e. waits
+    }
+
+    /// <summary>The first half of a flip, then <paramref name="gone"/> (to remove the tile) instead of the second.</summary>
+    public void TurnAway(double seconds, Action gone)
+    {
+        midFlip = false;
+        TurnEdgeOn(TimeSpan.FromSeconds(seconds / 2), gone);
+    }
+
+    private void TurnEdgeOn(TimeSpan duration, Action then)
+    {
+        var generation = ++flipGeneration;
+        var close = new DoubleAnimation(0, duration) { EasingFunction = new SineEase { EasingMode = EasingMode.EaseIn } };
+        close.Completed += (_, _) =>
+        {
+            if (generation == flipGeneration) // otherwise a newer flip took over this tile
+            {
+                then();
+            }
         };
 
         turn.BeginAnimation(ScaleTransform.ScaleXProperty, close);
-        shade.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(TurnedAwayShade, half));
+        shade.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(TurnedAwayShade, duration));
     }
 
     private void SetImage(ImageSource? source)

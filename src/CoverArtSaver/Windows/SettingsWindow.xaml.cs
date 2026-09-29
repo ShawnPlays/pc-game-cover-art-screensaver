@@ -55,6 +55,15 @@ public partial class SettingsWindow : Window
             [ContentFilterMode.Only] = "Show only these",
         };
         MatureCombo.ItemsSource = AdultCombo.ItemsSource;
+        RatingCombo.ItemsSource = new Dictionary<RatingLimit, string>
+        {
+            [RatingLimit.Any] = "Any rating (don't check)",
+            [RatingLimit.Mixed] = "Mixed or better",
+            [RatingLimit.MostlyPositive] = "Mostly Positive or better",
+            [RatingLimit.Positive] = "Positive or better",
+            [RatingLimit.VeryPositive] = "Very Positive or better",
+            [RatingLimit.OverwhelminglyPositive] = "Overwhelmingly Positive only",
+        };
         AdultKeywordsBox.Text = string.Join(Environment.NewLine, working.Filter.AdultKeywords);
         MatureKeywordsBox.Text = string.Join(Environment.NewLine, working.Filter.MatureKeywords);
 
@@ -74,6 +83,8 @@ public partial class SettingsWindow : Window
         AddHandler(ToggleButton.UncheckedEvent, new RoutedEventHandler(ScheduleSummary));
         // Each routed event needs its own delegate type; TextChanged uses TextChangedEventHandler.
         AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler(ScheduleSummary));
+        AddHandler(RangeBase.ValueChangedEvent, new RoutedPropertyChangedEventHandler<double>(ScheduleSummary));
+        AddHandler(Selector.SelectionChangedEvent, new SelectionChangedEventHandler(ScheduleSummary));
 
         Loaded += (_, _) =>
         {
@@ -171,6 +182,7 @@ public partial class SettingsWindow : Window
         if (library == null)
         {
             FilterSummary.Text = "No games to preview yet.";
+            FeaturedSummary.Text = "";
             return;
         }
 
@@ -178,6 +190,7 @@ public partial class SettingsWindow : Window
         {
             MeasureCoversThenUpdate(library.Games);
             FilterSummary.Text = "Checking the shape of your cover art…";
+            FeaturedSummary.Text = "";
             return;
         }
 
@@ -188,6 +201,10 @@ public partial class SettingsWindow : Window
         FilterSummary.Text =
             $"{result.Included.Count} of {library.Games.Count} games will appear in the screensaver." +
             (result.TotalExcluded > 0 ? "\nHidden: " + string.Join(", ", reasons) + "." : "");
+
+        var featured = result.Included.Count(g => FeaturedGames.Qualifies(g, working.MosaicFeatured));
+        FeaturedSummary.Text = $"{featured} of the {result.Included.Count} games in the screensaver qualify." +
+            (featured == 0 ? " With none, there are no large tiles." : "");
     }
 
     /// <summary>The first time, reading thousands of image headers takes a few seconds, so do it off the UI thread.</summary>

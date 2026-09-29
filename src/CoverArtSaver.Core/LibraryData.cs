@@ -61,6 +61,18 @@ public sealed class GameEntry
     public List<string> Categories { get; set; } = [];
     public List<string> AgeRatings { get; set; } = [];
 
+    /// <summary>Total time played, or null if unknown (e.g. an export from an older version of the add-on).</summary>
+    public long? PlaytimeSeconds { get; set; }
+
+    /// <summary>Steam only: its user review rating, 1 (Overwhelmingly Negative) to 9 (Overwhelmingly Positive).</summary>
+    public int? SteamReviewScore { get; set; }
+
+    /// <summary>Playnite only: 0–100, usually from user reviews on Steam or IGDB.</summary>
+    public int? CommunityScore { get; set; }
+
+    /// <summary>Playnite only: 0–100, from critics.</summary>
+    public int? CriticScore { get; set; }
+
     /// <summary>Every descriptive term attached to the game; what the content filter scans.</summary>
     public IEnumerable<string> AllTerms => Tags.Concat(Genres).Concat(Features).Concat(Categories).Concat(AgeRatings);
 

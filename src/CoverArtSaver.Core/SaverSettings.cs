@@ -76,6 +76,9 @@ public sealed class SaverSettings
     /// <summary>Time between one tile flipping and the next.</summary>
     public double MosaicFlipSeconds { get; set; } = 1.5;
 
+    /// <summary>Show games you've barely played as large tiles.</summary>
+    public FeaturedTileSettings MosaicFeatured { get; set; } = new();
+
     /// <summary>How far (in pixels) the mouse must move before the screensaver exits.</summary>
     public int MouseMoveThreshold { get; set; } = 12;
 
@@ -105,6 +108,8 @@ public sealed class SaverSettings
         MosaicColumns = Math.Clamp(MosaicColumns, 2, 30);
         MosaicFlipSeconds = Math.Clamp(MosaicFlipSeconds, 0.2, 60);
         MouseMoveThreshold = Math.Clamp(MouseMoveThreshold, 0, 500);
+        MosaicFeatured ??= new FeaturedTileSettings();
+        MosaicFeatured.Sanitize();
         Filter ??= new FilterSettings();
         Filter.AdultKeywords ??= [];
         Filter.MatureKeywords ??= [];

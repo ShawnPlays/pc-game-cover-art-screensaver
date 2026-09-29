@@ -11,11 +11,11 @@ public sealed record SteamLibraryResult(LibraryData Library, string SteamFolder,
 /// <list type="bullet">
 /// <item>games: everything Steam has cached library artwork for, plus installed games, keeping only apps whose
 /// type is "game" (so no DLC, tools, soundtracks or demos)</item>
-/// <item>details (name, genres, store tags, content descriptors, release year): appcache\appinfo.vdf</item>
+/// <item>details (name, genres, store tags, content descriptors, release year, user review rating): appcache\appinfo.vdf</item>
 /// <item>cover art: appcache\librarycache, with any custom artwork from userdata\&lt;id&gt;\config\grid taking priority</item>
 /// <item>installed: steamapps\appmanifest_*.acf in every library folder</item>
 /// <item>hidden, favorites and collections: userdata\&lt;id&gt;\config\cloudstorage</item>
-/// <item>last played: userdata\&lt;id&gt;\config\localconfig.vdf</item>
+/// <item>last played and play time: userdata\&lt;id&gt;\config\localconfig.vdf</item>
 /// </list>
 /// Collections become tags, so a Steam collection called "Screensaver: Hide" works like the Playnite tag.
 /// </summary>
@@ -76,7 +76,7 @@ public static class SteamLibrary
         var cacheFolder = Path.Combine(steamFolder, "appcache", "librarycache");
         var gridFolder = userFolder == null ? null : Path.Combine(userFolder, "config", "grid");
         var collections = userFolder == null ? new Collections() : ReadCollections(userFolder);
-        var lastPlayed = userFolder == null ? [] : ReadLastPlayed(userFolder);
+        var played = userFolder == null ? [] : ReadPlayStats(userFolder);
 
         var candidates = new HashSet<uint>(installed.Keys);
         candidates.UnionWith(CachedAppIds(cacheFolder));
@@ -99,6 +99,7 @@ public static class SteamLibrary
 
             var id = appId.ToString(System.Globalization.CultureInfo.InvariantCulture);
             var name = common["name"].Value ?? manifestName ?? $"Steam app {id}";
+            var stats = played.GetValueOrDefault(appId);
             games.Add(new GameEntry
             {
                 Id = "steam:" + id,
@@ -108,7 +109,9 @@ public static class SteamLibrary
                 Hidden = collections.Hidden.Contains(appId),
                 Favorite = collections.Favorites.Contains(appId),
                 IsInstalled = isInstalled,
-                LastActivity = lastPlayed.TryGetValue(appId, out var played) ? played : null,
+                LastActivity = stats.LastPlayed,
+                PlaytimeSeconds = stats.Minutes * 60, // Steam lists every game you've played; not listed = never played
+                SteamReviewScore = common["review_score"].AsLong() is long score and >= 1 and <= 9 ? (int)score : null,
                 ReleaseYear = ReleaseYear(common),
                 Source = "Steam",
                 Platforms = ["Steam"],
@@ -274,7 +277,9 @@ public static class SteamLibrary
         return seconds > 0 ? DateTimeOffset.FromUnixTimeSeconds(seconds.Value).Year : null;
     }
 
-    private static Dictionary<uint, DateTime> ReadLastPlayed(string userFolder)
+    private readonly record struct PlayStats(DateTime? LastPlayed, long Minutes);
+
+    private static Dictionary<uint, PlayStats> ReadPlayStats(string userFolder)
     {
         var path = Path.Combine(userFolder, "config", "localconfig.vdf");
         if (!File.Exists(path))
@@ -283,12 +288,15 @@ public static class SteamLibrary
         }
 
         var apps = Vdf.Load(path)["UserLocalConfigStore"]["Software"]["Valve"]["Steam"]["apps"];
-        var result = new Dictionary<uint, DateTime>();
+        var result = new Dictionary<uint, PlayStats>();
         foreach (var (key, app) in apps.Children)
         {
-            if (uint.TryParse(key, out var appId) && app["LastPlayed"].AsLong() is long seconds and > 0)
+            if (uint.TryParse(key, out var appId))
             {
-                result[appId] = DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime;
+                DateTime? lastPlayed = app["LastPlayed"].AsLong() is long seconds and > 0
+                    ? DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime
+                    : null;
+                result[appId] = new PlayStats(lastPlayed, Math.Max(0, app["Playtime"].AsLong() ?? 0)); // minutes
             }
         }
 
