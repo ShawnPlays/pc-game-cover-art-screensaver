@@ -26,6 +26,7 @@ public partial class SettingsWindow : Window
     private CoverSizeCache? coverSizes;
     private bool measuringCovers;
     private string? musicFolderKey;
+    private string? skipLibrariesKey;
 
     public SettingsWindow(SaverSettings settings)
     {
@@ -208,6 +209,7 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        UpdateSkipLibraries(library);
         var result = new GameFilter(working.Filter, coverAspect: coverSizes == null ? null : coverSizes.GetAspect).Apply(library.Games);
         var reasons = result.ExcludedCounts
             .OrderByDescending(kv => kv.Value)
@@ -221,6 +223,46 @@ public partial class SettingsWindow : Window
             ? $"Any of the {result.Included.Count} games in the screensaver can get a large tile."
             : $"{featured} of the {result.Included.Count} games in the screensaver qualify." +
               (featured == 0 ? " With none, there are no large tiles." : "");
+    }
+
+    /// <summary>
+    /// One checkbox per library integration in the export, plus any already chosen, with how many games each has.
+    /// Rebuilt only when that list changes.
+    /// </summary>
+    private void UpdateSkipLibraries(LibraryData data)
+    {
+        var chosen = working.MosaicFeatured.SkipLibraries;
+        var counts = data.Games
+            .Where(g => g.Library != null)
+            .GroupBy(g => g.Library!, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+        var names = counts.Keys.Union(chosen, StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToList();
+        var key = string.Join("|", names.Select(n => $"{n}:{counts.GetValueOrDefault(n)}"));
+        if (key == skipLibrariesKey)
+        {
+            return;
+        }
+
+        skipLibrariesKey = key;
+        SkipLibrariesPanel.Children.Clear();
+        foreach (var name in names)
+        {
+            var box = new CheckBox
+            {
+                Content = counts.TryGetValue(name, out var count) ? $"{name} ({count})" : name,
+                IsChecked = chosen.Contains(name, StringComparer.OrdinalIgnoreCase),
+                Margin = new Thickness(0, 2, 16, 2),
+            };
+            box.Checked += (_, _) =>
+            {
+                if (!chosen.Contains(name, StringComparer.OrdinalIgnoreCase))
+                {
+                    chosen.Add(name);
+                }
+            };
+            box.Unchecked += (_, _) => chosen.RemoveAll(n => string.Equals(n, name, StringComparison.OrdinalIgnoreCase));
+            SkipLibrariesPanel.Children.Add(box);
+        }
     }
 
     /// <summary>Lists the installed soundtracks in the background, again only if the Steam folder changes.</summary>
@@ -325,6 +367,8 @@ public partial class SettingsWindow : Window
         var steam = SourceCombo.SelectedValue is LibrarySource.Steam;
         SteamPanel.Visibility = steam ? Visibility.Visible : Visibility.Collapsed;
         PlaynitePanel.Visibility = steam ? Visibility.Collapsed : Visibility.Visible;
+        // Every Steam game's play time comes from Steam, so there's nothing to leave out.
+        SkipLabel.Visibility = SkipPanel.Visibility = PlaynitePanel.Visibility;
     }
 
     private void OnBrowseSteamClick(object sender, RoutedEventArgs e)

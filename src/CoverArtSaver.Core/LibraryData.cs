@@ -73,6 +73,15 @@ public sealed class GameEntry
     /// <summary>Playnite only: 0–100, from critics.</summary>
     public int? CriticScore { get; set; }
 
+    /// <summary>
+    /// The library integration the game came from ("Steam", "Humble", "itch.io"...), or null if it was added by hand
+    /// or the export comes from an older add-on that didn't save it.
+    /// </summary>
+    public string? Library { get; set; }
+
+    /// <summary>Playnite only: added by hand rather than imported by a library integration.</summary>
+    public bool AddedManually { get; set; }
+
     /// <summary>Every descriptive term attached to the game; what the content filter scans.</summary>
     public IEnumerable<string> AllTerms => Tags.Concat(Genres).Concat(Features).Concat(Categories).Concat(AgeRatings);
 

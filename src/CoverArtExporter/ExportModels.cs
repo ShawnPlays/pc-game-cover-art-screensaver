@@ -50,5 +50,14 @@ namespace CoverArtExporter
 
         /// <summary>0–100. Used when there's no community score.</summary>
         public int? CriticScore { get; set; }
+
+        /// <summary>
+        /// Name of the library integration that imported the game (e.g. "Steam", "Humble", "itch.io"), or null for
+        /// games added by hand. "Unknown" if that integration has since been uninstalled.
+        /// </summary>
+        public string Library { get; set; }
+
+        /// <summary>True for games added to Playnite by hand rather than imported by a library integration.</summary>
+        public bool AddedManually { get; set; }
     }
 }

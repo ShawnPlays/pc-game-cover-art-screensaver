@@ -114,6 +114,7 @@ public static class SteamLibrary
                 SteamReviewScore = common["review_score"].AsLong() is long score and >= 1 and <= 9 ? (int)score : null,
                 ReleaseYear = ReleaseYear(common),
                 Source = "Steam",
+                Library = "Steam",
                 Platforms = ["Steam"],
                 Genres = [.. common["genres"].Children.Select(g => Genres.GetValueOrDefault(g.Value.Value ?? "")).OfType<string>()],
                 Tags =

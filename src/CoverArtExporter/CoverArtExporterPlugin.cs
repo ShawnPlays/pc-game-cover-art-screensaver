@@ -146,6 +146,9 @@ namespace CoverArtExporter
         private List<ExportedGame> BuildSnapshot()
         {
             var db = PlayniteApi.Database;
+            var libraries = PlayniteApi.Addons.Plugins.OfType<LibraryPlugin>()
+                .GroupBy(p => p.Id)
+                .ToDictionary(p => p.Key, p => p.First().Name);
             return db.Games.Select(g => new ExportedGame
             {
                 Id = g.Id.ToString(),
@@ -168,6 +171,10 @@ namespace CoverArtExporter
                 PlaytimeSeconds = (long)g.Playtime,
                 CommunityScore = g.CommunityScore,
                 CriticScore = g.CriticScore,
+                AddedManually = g.PluginId == Guid.Empty,
+                Library = g.PluginId == Guid.Empty ? null
+                    : libraries.TryGetValue(g.PluginId, out var library) ? library
+                    : "Unknown",
             }).ToList();
         }
 

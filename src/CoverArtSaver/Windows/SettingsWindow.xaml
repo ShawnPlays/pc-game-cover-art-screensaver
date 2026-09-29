@@ -128,7 +128,7 @@
                                             <ColumnDefinition Width="Auto" SharedSizeGroup="FeaturedValue" />
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                            <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Style="{StaticResource Label}" Text="Played for at most" />
@@ -146,6 +146,22 @@
                                             if there's none (Overwhelmingly Positive = 95+, Very Positive and Positive = 80+,
                                             Mostly Positive = 70+, Mixed = 40+). Games without a rating are left out.
                                         </TextBlock>
+
+                                        <!-- Playnite only: games whose "0 hours" may just mean they were played outside Playnite. -->
+                                        <TextBlock Grid.Row="4" Style="{StaticResource Label}" Text="Leave out" VerticalAlignment="Top"
+                                                   x:Name="SkipLabel" />
+                                        <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" x:Name="SkipPanel">
+                                            <CheckBox Content="Games added to Playnite by hand" IsChecked="{Binding SkipManuallyAdded}"
+                                                      ToolTip="Games that no library integration imported, such as emulated games or ones you added yourself." />
+                                            <TextBlock Text="Games from these libraries:" Margin="0,4,0,0" />
+                                            <WrapPanel x:Name="SkipLibrariesPanel" Margin="0,0,0,2" />
+                                            <TextBlock Foreground="#666" FontSize="11" Margin="0,0,0,4" TextWrapping="Wrap">
+                                                For stores that can't tell Playnite how long you've played. Ticked at first: every store
+                                                except Steam, Epic, GOG, Xbox, PlayStation and EA app, which do report it. Playnite only
+                                                counts the time for the others if you start them from Playnite, so 0 hours may not be true. Games left out still appear as normal tiles. If your libraries aren't listed,
+                                                update the Playnite add-on and export again.
+                                            </TextBlock>
+                                        </StackPanel>
                                     </Grid>
 
                                     <TextBlock Grid.Row="4" Grid.ColumnSpan="3" x:Name="FeaturedSummary" TextWrapping="Wrap" Margin="0,4,0,2" />

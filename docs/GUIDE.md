@@ -146,7 +146,7 @@ share nothing but the JSON file, which is why this split works.
 | `CoverSizes.cs` | For the cover shape option (`CoverShape.cs` decides what counts as vertical, square or horizontal). `ImageHeader` reads an image's width and height from its first bytes (JPEG, PNG, GIF, BMP, WebP) without decoding it. `CoverSizeCache` remembers the results in `cover-sizes.json`, so only new or changed covers are read again. |
 | `MonitorTurn.cs` | "Monitors take turns". Every monitor works out, from the same seed, which steps of the shared schedule are its own, so only one monitor changes at a time without the windows talking to each other. Each round is shuffled, and the same monitor never goes twice in a row. |
 | `MosaicLayout.cs` | **The mosaic style.** `MosaicLayout.Fit` turns "N covers across" into a grid whose row count follows the screen's shape. `MosaicPlanner` picks which tile flips next (never one that's still turning) and which game it flips to (the next one in the list that isn't already on screen). It's seeded, so mirrored monitors flip identically. The wall is a list of "pieces", each 1×1 or N×N cells. A large piece that's picked moves: the planner returns a `MosaicStep` that removes it and the small tiles under its new spot, and adds normal tiles to the space it left. |
-| `FeaturedGames.cs` | Which games get large mosaic tiles. In *barely played* mode: little or no play time, and a minimum rating (Steam's rating tiers become percentage thresholds for Playnite's Community or Critic Score). In *random* mode every game qualifies; `MosaicView` then shuffles them (seeded, so mirrored monitors match) so large tiles don't follow the Order setting, and every game can also appear as a normal tile. |
+| `FeaturedGames.cs` | Which games get large mosaic tiles. In *barely played* mode: little or no play time, and a minimum rating (Steam's rating tiers become percentage thresholds for Playnite's Community or Critic Score). It can also leave out games whose play time can't be trusted: ones added to Playnite by hand, and ones from chosen library integrations (the add-on exports each game's `Library` name and `AddedManually`). In *random* mode every game qualifies; `MosaicView` then shuffles them (seeded, so mirrored monitors match) so large tiles don't follow the Order setting, and every game can also appear as a normal tile. |
 | `SaverSettings.cs` | Every option and its default, saved as JSON |
 
 Everything here is plain .NET, so it's unit-tested in `tests/`. Try changing `SideSpacing` in `CoverflowMath.cs`
@@ -192,14 +192,14 @@ To be safe, run the screensaver in `/w` mode for a while after changing the filt
 ## Stage 7: Build release files and install for real
 
 ```powershell
-./scripts/build-release.ps1 -Version 1.3.1
+./scripts/build-release.ps1 -Version 1.3.2
 ```
 
 This runs the tests and then creates:
 
 - `dist/PCGameCoverArt.scr`: one self-contained file, about 70 MB, because it bundles .NET so users don't
   need to install it
-- `dist/PCGameCoverArtExporter_1.3.1.pext`: the Playnite add-on package, which is a zip file
+- `dist/PCGameCoverArtExporter_1.3.2.pext`: the Playnite add-on package, which is a zip file
 
 The `-Version` number is stamped into both files and into the add-on's `extension.yaml`. Keep `<Version>` in both
 `.csproj` files, `extension.yaml` and `app.manifest` in step with the latest release too, so everyday builds show the right number.

@@ -40,6 +40,52 @@ public class FeaturedGamesTests
     }
 
     [Fact]
+    public void GamesAddedByHandCanBeLeftOut()
+    {
+        var manual = new GameEntry { Name = "Emulated", PlaytimeSeconds = 0, AddedManually = true };
+        var settings = Settings();
+        Assert.True(settings.SkipManuallyAdded); // on by default
+        Assert.False(FeaturedGames.Qualifies(manual, settings));
+
+        settings.SkipManuallyAdded = false;
+        Assert.True(FeaturedGames.Qualifies(manual, settings));
+    }
+
+    [Theory]
+    [InlineData("Humble", false)]
+    [InlineData("ITCH.IO", false)] // names match ignoring case
+    [InlineData("Steam", true)]
+    [InlineData(null, true)]       // export from an older add-on: nothing to go on, so it counts
+    public void GamesFromChosenLibrariesAreLeftOut(string? library, bool qualifies) =>
+        Assert.Equal(qualifies, FeaturedGames.Qualifies(new GameEntry { PlaytimeSeconds = 0, Library = library }, Settings()));
+
+    [Theory]
+    [InlineData("Steam")]
+    [InlineData("Epic")]
+    [InlineData("GOG")]
+    [InlineData("Xbox")]
+    [InlineData("PlayStation")]
+    [InlineData("EA app")]
+    public void StoresThatReportPlaytimeAreNotLeftOutByDefault(string library) =>
+        Assert.DoesNotContain(library, FeaturedTileSettings.DefaultSkipLibraries);
+
+    [Theory]
+    [InlineData("Humble Keys")]
+    [InlineData("Amazon Games")]
+    [InlineData("Battle.net")]
+    [InlineData("Ubisoft Connect")]
+    public void StoresThatDontReportPlaytimeAreLeftOutByDefault(string library) =>
+        Assert.False(FeaturedGames.Qualifies(new GameEntry { PlaytimeSeconds = 0, Library = library }, Settings()));
+
+    [Fact]
+    public void RandomModeIgnoresTheLeaveOutOptions()
+    {
+        var settings = Settings();
+        settings.Mode = FeaturedTileMode.Random;
+        Assert.True(FeaturedGames.Qualifies(new GameEntry { AddedManually = true, Library = "Humble" }, settings));
+    }
+
+    [Fact]
     public void UnknownPlaytimeNeverQualifies() =>
         Assert.False(FeaturedGames.Qualifies(Game(null), Settings(50)));
 
@@ -87,12 +133,17 @@ public class FeaturedGamesTests
     {
         var data = LibraryData.Parse("""
             { "SchemaVersion": 1, "Games": [
-                { "Id": "a", "Name": "New", "PlaytimeSeconds": 7200, "CommunityScore": 88, "CriticScore": null },
-                { "Id": "b", "Name": "From an older add-on" } ] }
+                { "Id": "a", "Name": "New", "PlaytimeSeconds": 7200, "CommunityScore": 88, "CriticScore": null,
+                  "Library": "itch.io", "AddedManually": false },
+                { "Id": "b", "Name": "From an older add-on" },
+                { "Id": "c", "Name": "Added by hand", "Library": null, "AddedManually": true } ] }
             """);
         Assert.Equal(7200, data.Games[0].PlaytimeSeconds);
         Assert.Equal(88, data.Games[0].CommunityScore);
+        Assert.Equal("itch.io", data.Games[0].Library);
         Assert.Null(data.Games[1].PlaytimeSeconds); // unknown, so never gets a large tile
+        Assert.False(data.Games[1].AddedManually);  // older add-ons didn't say, so don't assume
+        Assert.True(data.Games[2].AddedManually);
     }
 
     [Fact]
@@ -101,6 +152,12 @@ public class FeaturedGamesTests
         var settings = System.Text.Json.JsonSerializer.Deserialize<SaverSettings>(
             """{ "MosaicFeatured": { "Enabled": true, "Size": 3 } }""")!.Sanitize();
         Assert.Equal(FeaturedTileMode.BarelyPlayed, settings.MosaicFeatured.Mode);
+        Assert.True(settings.MosaicFeatured.SkipManuallyAdded);
+        Assert.Equal(FeaturedTileSettings.DefaultSkipLibraries, settings.MosaicFeatured.SkipLibraries);
+
+        var nullList = System.Text.Json.JsonSerializer.Deserialize<SaverSettings>(
+            """{ "MosaicFeatured": { "SkipLibraries": null } }""")!.Sanitize();
+        Assert.Empty(nullList.MosaicFeatured.SkipLibraries);
     }
 
     [Fact]
@@ -111,7 +168,11 @@ public class FeaturedGamesTests
 
         settings.MosaicFeatured.MinimumRating = RatingLimit.MostlyPositive;
         settings.MosaicFeatured.Mode = FeaturedTileMode.Random;
+        settings.MosaicFeatured.SkipManuallyAdded = false;
+        settings.MosaicFeatured.SkipLibraries = ["Amazon Games"];
         var copy = settings.Clone();
+        Assert.False(copy.MosaicFeatured.SkipManuallyAdded);
+        Assert.Equal(["Amazon Games"], copy.MosaicFeatured.SkipLibraries);
         Assert.True(copy.MosaicFeatured.Enabled);
         Assert.Equal(FeaturedTileMode.Random, copy.MosaicFeatured.Mode);
         Assert.Equal(RatingLimit.MostlyPositive, copy.MosaicFeatured.MinimumRating);

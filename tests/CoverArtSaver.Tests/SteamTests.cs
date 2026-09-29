@@ -79,6 +79,8 @@ public class SteamLibraryTests : IDisposable
         Assert.Equal(["steam:10", "steam:620980"], games.Keys.Order());  // the DLC is left out
         var beatSaber = games["steam:620980"];
         Assert.Equal("Beat Saber", beatSaber.Name);
+        Assert.Equal("Steam", beatSaber.Library);
+        Assert.False(beatSaber.AddedManually);
         Assert.True(beatSaber.IsInstalled);
         Assert.True(beatSaber.Favorite);
         Assert.Equal(2019, beatSaber.ReleaseYear);
