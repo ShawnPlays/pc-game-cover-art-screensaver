@@ -262,7 +262,17 @@ git push origin v1.0.0
 
 ✅ **Check:** after a few minutes, **Releases** shows *v1.0.0* with the `.scr` and `.pext` attached.
 
-For later versions, commit your changes, push, and tag `v1.1.0`. There's nothing to edit by hand.
+For later versions:
+
+1. Add a `#### Notes for version x.y.z` section to the README's *Upgrade from an earlier version* part: what's new,
+   and anything people must do when upgrading (such as updating the Playnite add-on). Write it so it reads on its own;
+   links like `[Music](#music)` are fine.
+2. Commit, push, and tag `vx.y.z`.
+
+The workflow runs `scripts/release-notes.ps1`, which turns that section into the release's **What's new**, followed by
+the install and upgrade steps; GitHub adds its list of changes at the end. If the section is missing, the release
+still goes out without a What's new and the Actions run shows a warning. Try it locally with
+`./scripts/release-notes.ps1 -Version x.y.z`, which writes `obj\release-notes.md`.
 
 ### 8.4 Make the project look good
 

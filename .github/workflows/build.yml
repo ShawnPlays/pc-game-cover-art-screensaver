@@ -32,28 +32,16 @@ jobs:
           name: pc-game-cover-art
           path: dist/*
 
+      # "What's new" comes from the README's "#### Notes for version x.y.z" section; see scripts/release-notes.ps1.
+      - name: Write release notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: ./scripts/release-notes.ps1 -OutFile release-notes.md
+
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+          body_path: release-notes.md
           generate_release_notes: true   # the list of changes is added below this text
-          body: |
-            ## How to install
-
-            Download from **Assets** below:
-
-            - `PCGameCoverArt.scr` (everyone): right-click → **Properties** → tick **Unblock** → **OK**, then copy it into `C:\Windows\System32`.
-            - `PCGameCoverArtExporter_*.pext` (Playnite users only): double-click it (or drag it onto Playnite), click **Yes**, then restart Playnite. Steam users don't need it.
-
-            Then open **Change screen saver** from the Start menu, choose **PCGameCoverArt**, click **Settings…**, and choose **Playnite** or **Steam** under **Get games from**.
-
-            ## Upgrading from an earlier version
-
-            No need to uninstall; your settings are kept. Playnite users: install the new `.pext` first (Playnite offers to update the add-on), then restart Playnite. Close Screen Saver Settings, copy the new `.scr` into `C:\Windows\System32` and choose **Replace the file in the destination**.
-            Version-specific notes: **${{ github.server_url }}/${{ github.repository }}#upgrade-from-an-earlier-version**
-
-            Full step-by-step directions, uninstalling and troubleshooting:
-            **${{ github.server_url }}/${{ github.repository }}#install**
-
-            Requires Windows 10/11 (64-bit), and Playnite 10 or Steam.

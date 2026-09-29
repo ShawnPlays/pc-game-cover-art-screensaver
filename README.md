@@ -125,7 +125,8 @@ To check that it works: in Playnite, open the main menu (☰) → **Extensions**
 
 ### Upgrade from an earlier version
 
-You don't need to uninstall anything first. Your settings are kept, and any new options start switched off.
+You don't need to uninstall anything first. Your settings are kept. Check the notes for your new version below
+(they also appear on each release's download page).
 
 1. **Download** the new files from the [Releases page](../../releases/latest), and unblock the new `.scr` as in
    step 3.1.
@@ -151,8 +152,8 @@ You don't need to uninstall anything first. Your settings are kept, and any new 
   Leave out**.
 - **This is on by default**, so if you already use large tiles for barely played games, fewer games may qualify
   after upgrading. The line under the options says how many do.
-- **Playnite users must update the add-on** (step 2), and let it export again, for these options to work. Older
-  add-ons don't save which store each game came from, so until then no game is left out.
+- **Playnite users must update the add-on** (install the new `.pext` and restart Playnite) so it exports again, for
+  these options to work. Older add-ons don't save which store each game came from, so until then no game is left out.
 - Steam users don't need to do anything: every game's play time comes from Steam.
 
 #### Notes for version 1.3.1
@@ -170,13 +171,13 @@ You don't need to uninstall anything first. Your settings are kept, and any new 
 - The music always comes from Steam, even if your games come from Playnite, so Playnite users need Steam installed
   (with some soundtracks) to use it.
 - Nothing changed in the Playnite add-on apart from its version number. Updating it is optional, unless you're coming
-  from a version before 1.2.0 (see below).
+  from a version before 1.2.0 (see the 1.2.0 notes).
 
 #### Notes for version 1.2.0
 
 - New in 1.2.0: Mosaic can show games you've barely played as large tiles. Turn it on under
   **Settings… → Display → Mosaic**.
-- **Playnite users must update the add-on** (step 2) to use large tiles. Older add-ons don't save play time or review
+- **Playnite users must update the add-on** (install the new `.pext` and restart Playnite) to use large tiles. Older add-ons don't save play time or review
   scores, so until the new add-on has saved your library, no Playnite game counts as barely played.
 - Steam users don't need to do anything extra: play time and review ratings are read from Steam's own files.
 
