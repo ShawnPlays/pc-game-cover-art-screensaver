@@ -166,6 +166,14 @@ To upgrade by hand instead:
 
 </details>
 
+#### Notes for version 2.0.1
+
+- Fixes **automatic updates**, which didn't run in 2.0.0: Windows' Task Scheduler couldn't start the screensaver's
+  program, so the daily check never happened.
+- **If you have 2.0.0, update this once by hand:** open the screensaver settings and click **Update now** on the
+  yellow bar, or run the 2.0.1 installer. After that, updates install themselves again.
+- Nothing changed in the Playnite add-on apart from its version number, so updating it is optional.
+
 #### Notes for version 2.0.0
 
 - New in 2.0.0: an **installer**, `PCGameCoverArtSetup_2.0.0.exe`. One download sets everything up: it puts the

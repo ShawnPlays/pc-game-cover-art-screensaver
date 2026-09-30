@@ -150,7 +150,7 @@ share nothing but the JSON file, which is why this split works.
 | `FeaturedGames.cs` | Which games get large mosaic tiles. In *barely played* mode: little or no play time, and a minimum rating (Steam's rating tiers become percentage thresholds for Playnite's Community or Critic Score). It can also leave out games whose play time can't be trusted: ones added to Playnite by hand, and ones from chosen library integrations (the add-on exports each game's `Library` name and `AddedManually`). In *random* mode every game qualifies; `MosaicView` then shuffles them (seeded, so mirrored monitors match) so large tiles don't follow the Order setting, and every game can also appear as a normal tile. |
 | `SaverSettings.cs` | Every option and its default, saved as JSON |
 | `UpdateCheck.cs` | Asks GitHub's "latest release" API whether there's a newer version, and finds its installer. Used by the settings window and the automatic updater, never the screensaver. |
-| `AutoUpdate.cs` | **Automatic updates.** The installer registers a daily scheduled task (`TaskXml`) that runs `PCGameCoverArt.scr /update` as SYSTEM, so there's no administrator prompt. `AutoUpdater` skips the day if the screensaver is open, downloads the new installer into a fresh folder only SYSTEM can write to, lets a signature check veto it, and starts it silently. It doesn't wait: the installer replaces (and closes) this very program. |
+| `AutoUpdate.cs` | **Automatic updates.** The installer registers a daily scheduled task (`TaskXml`) that runs `PCGameCoverArt.scr /update` as SYSTEM, so there's no administrator prompt. It runs it through `cmd.exe`: Task Scheduler itself can't start a `.scr` file and fails with "file not found" (0x80070002). `AutoUpdater` skips the day if the screensaver is open, downloads the new installer into a fresh folder only SYSTEM can write to, lets a signature check veto it, and starts it silently. It doesn't wait: the installer replaces (and closes) this very program. |
 
 Everything here is plain .NET, so it's unit-tested in `tests/`. Try changing `SideSpacing` in `CoverflowMath.cs`
 and rerun `/w` to see the effect.
@@ -197,17 +197,17 @@ To be safe, run the screensaver in `/w` mode for a while after changing the filt
 ## Stage 7: Build release files and install for real
 
 ```powershell
-./scripts/build-release.ps1 -Version 2.0.0
+./scripts/build-release.ps1 -Version 2.0.1
 ```
 
 This runs the tests and then creates:
 
-- `dist/PCGameCoverArtSetup_2.0.0.exe`: the installer most people download. It's built by
+- `dist/PCGameCoverArtSetup_2.0.1.exe`: the installer most people download. It's built by
   [Inno Setup](https://jrsoftware.org/isinfo.php) from `installer/PCGameCoverArt.iss` (see `scripts/build-installer.ps1`);
   install Inno Setup with `winget install JRSoftware.InnoSetup`
 - `dist/PCGameCoverArt.scr`: one self-contained file, about 70 MB, because it bundles .NET so users don't
   need to install it
-- `dist/PCGameCoverArtExporter_2.0.0.pext`: the Playnite add-on package, which is a zip file
+- `dist/PCGameCoverArtExporter_2.0.1.pext`: the Playnite add-on package, which is a zip file
 - `dist/installer.yaml`: tells Playnite's add-on browser about this version of the add-on (see *Publishing* below)
 
 The `-Version` number is stamped into both files and into the add-on's `extension.yaml`. Keep `<Version>` in both

@@ -4,8 +4,13 @@ using CoverArtSaver.Core;
 
 namespace CoverArtSaver.Tests;
 
-public class AutoUpdateTests
+public sealed class AutoUpdateTests : IDisposable
 {
+    /// <summary>Downloads go here instead of the real temp folder, and are deleted after each test.</summary>
+    private readonly string downloads = Directory.CreateTempSubdirectory("PCGameCoverArtTests-").FullName;
+
+    public void Dispose() => Directory.Delete(downloads, recursive: true);
+
     private const string InstallerUrl =
         "https://github.com/ShawnPlays/pc-game-cover-art-screensaver/releases/download/v2.2.0/PCGameCoverArtSetup_2.2.0.exe";
 
@@ -27,13 +32,14 @@ public class AutoUpdateTests
         }
     }
 
-    private static (AutoUpdater Updater, FakeGitHub GitHub, List<(string Path, string Args)> Started) Make(
+    private (AutoUpdater Updater, FakeGitHub GitHub, List<(string Path, string Args)> Started) Make(
         string json, string current = "2.1.0", bool running = false, bool trusted = true)
     {
         var github = new FakeGitHub(json);
         var started = new List<(string, string)>();
         var updater = new AutoUpdater(new HttpClient(github), Version.Parse(current))
         {
+            DownloadRoot = downloads,
             IsScreensaverRunning = () => running,
             IsTrusted = _ => trusted,
             StartInstaller = (path, args) =>
@@ -54,7 +60,7 @@ public class AutoUpdateTests
 
         var (path, args) = Assert.Single(started);
         Assert.Equal(new byte[] { 0x4D, 0x5A, 1, 2, 3 }, File.ReadAllBytes(path));
-        Assert.StartsWith(Path.GetTempPath(), path);
+        Assert.StartsWith(downloads, path);
         Assert.Contains("/VERYSILENT", args);
         Assert.Contains("/MERGETASKS=\"!activate\"", args); // never changes the active screensaver
         Assert.Contains(InstallerUrl, github.Requests);
@@ -101,8 +107,9 @@ public class AutoUpdateTests
         var xml = XDocument.Parse(AutoUpdater.TaskXml(@"C:\Windows\System32\PCGameCoverArt.scr"));
         XNamespace ns = "http://schemas.microsoft.com/windows/2004/02/mit/task";
 
-        Assert.Equal(@"C:\Windows\System32\PCGameCoverArt.scr", xml.Descendants(ns + "Command").Single().Value);
-        Assert.Equal("/update", xml.Descendants(ns + "Arguments").Single().Value);
+        // Through cmd.exe: Task Scheduler can't start a .scr file itself.
+        Assert.Equal(@"%SystemRoot%\System32\cmd.exe", xml.Descendants(ns + "Command").Single().Value);
+        Assert.Equal("/c \"\"C:\\Windows\\System32\\PCGameCoverArt.scr\" /update\"", xml.Descendants(ns + "Arguments").Single().Value);
         Assert.Equal("S-1-5-18", xml.Descendants(ns + "UserId").Single().Value); // SYSTEM
         Assert.Equal("1", xml.Descendants(ns + "DaysInterval").Single().Value);
         Assert.Equal("true", xml.Descendants(ns + "StartWhenAvailable").Single().Value);

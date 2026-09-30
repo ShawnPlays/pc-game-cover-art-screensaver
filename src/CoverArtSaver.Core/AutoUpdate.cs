@@ -47,6 +47,9 @@ public sealed class AutoUpdater(HttpClient http, Version currentVersion)
 
     public Action<string> Log { get; init; } = _ => { };
 
+    /// <summary>Where download folders go. The temp folder: for SYSTEM, one only administrators can write to.</summary>
+    public string DownloadRoot { get; init; } = Path.GetTempPath();
+
     public async Task<AutoUpdateResult> RunAsync(CancellationToken cancel = default)
     {
         RemoveOldDownloads();
@@ -70,7 +73,8 @@ public sealed class AutoUpdater(HttpClient http, Version currentVersion)
         }
 
         // A new, randomly named folder: created by this process, so nothing else can have planted a file in it.
-        var folder = Directory.CreateTempSubdirectory(DownloadFolderPrefix).FullName;
+        var folder = Path.Combine(DownloadRoot, DownloadFolderPrefix + Path.GetRandomFileName());
+        Directory.CreateDirectory(folder);
         var path = Path.Combine(folder, $"PCGameCoverArtSetup_{update.Version}.exe");
         Log($"Downloading version {update.Version} from {url}");
         using (var response = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancel))
@@ -105,11 +109,11 @@ public sealed class AutoUpdater(HttpClient http, Version currentVersion)
         && uri.AbsolutePath.Contains("/releases/download/", StringComparison.Ordinal);
 
     /// <summary>Earlier runs can't delete their installer while it's running, so tidy up at the start of the next one.</summary>
-    private static void RemoveOldDownloads()
+    private void RemoveOldDownloads()
     {
         try
         {
-            foreach (var old in Directory.EnumerateDirectories(Path.GetTempPath(), DownloadFolderPrefix + "*"))
+            foreach (var old in Directory.EnumerateDirectories(DownloadRoot, DownloadFolderPrefix + "*"))
             {
                 if (Directory.GetLastWriteTimeUtc(old) < DateTime.UtcNow.AddDays(-1))
                 {
@@ -122,6 +126,12 @@ public sealed class AutoUpdater(HttpClient http, Version currentVersion)
             // Still in use or not ours; try again next time.
         }
     }
+
+    /// <summary>
+    /// Task Scheduler won't start a .scr file directly (the task fails with "file not found", 0x80070002, before the
+    /// program starts), so the task runs it through cmd.exe, which starts it like any program.
+    /// </summary>
+    public static string TaskArguments(string executable) => $"/c \"\"{executable}\" /update\"";
 
     /// <summary>
     /// The daily scheduled task, in Task Scheduler's XML format. It runs as SYSTEM (no prompts), some time between noon
@@ -165,8 +175,8 @@ public sealed class AutoUpdater(HttpClient http, Version currentVersion)
               </Settings>
               <Actions Context="Author">
                 <Exec>
-                  <Command>{SecurityElement.Escape(executable)}</Command>
-                  <Arguments>/update</Arguments>
+                  <Command>%SystemRoot%\System32\cmd.exe</Command>
+                  <Arguments>{SecurityElement.Escape(TaskArguments(executable))}</Arguments>
                 </Exec>
               </Actions>
             </Task>
