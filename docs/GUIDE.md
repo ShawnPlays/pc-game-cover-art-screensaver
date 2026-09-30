@@ -167,7 +167,7 @@ and rerun `/w` to see the effect.
 | `Rendering/CoverTextureCache.cs` | Loads images on a background thread at a reduced size, which saves a lot of memory. It pre-computes each reflection by flipping and darkening pixels once, which is much cheaper than doing it live in 3D. It keeps only nearby covers in memory. |
 | `Audio/SoundtrackPlayer.cs` | Plays the soundtracks with WPF's `MediaPlayer`: fades in over 3 seconds, moves to the next track when one ends, and skips files Windows can't play. |
 | `Updates/AutoUpdateService.cs` | The Windows side of automatic updates: `/update` runs `AutoUpdater` and logs to `C:\Program Files\PC Game Cover Art\update.log`; `/autoupdate on\|off` (run elevated by the installer or the About tab) adds or removes the scheduled task with `schtasks`; `IsEnabled` reads it back through Task Scheduler's COM API. |
-| `Interop/Authenticode.cs` | Windows' signature check (`WinVerifyTrust`). Once releases are signed, the automatic updater only runs an installer signed by the same publisher as the installed copy. |
+| `Interop/Authenticode.cs` | Windows' signature check (`WinVerifyTrust`). Once releases are signed, the automatic updater only runs an installer signed by the same publisher, with the same product name, as the installed copy. |
 | `Windows/ScreensaverSession.cs` | One window per monitor, plus mirror, independent, or primary-only mode. It also starts the music (once, not per monitor) and stops it on exit. The small preview doesn't go through here, so it's silent. |
 | `Windows/ScreensaverWindow.cs` | Borderless topmost window. It exits on a key, a click, or a real mouse move (small jitter is ignored). |
 | `Windows/PreviewHost.cs` | Draws inside Windows' tiny preview monitor as a Win32 child window, and exits when that window goes away |
@@ -344,36 +344,60 @@ keeps it updated.
    *Publish to winget* step then opens the pull request for each new release by itself. It's skipped while the secret
    is missing.
 
-#### Code signing
+#### Code signing (SignPath Foundation)
 
 Unsigned downloads get "isn't commonly downloaded" warnings from browsers and a "Windows protected your PC" screen
-from SmartScreen. Signing removes the "unknown publisher" part and helps the file build reputation faster.
+from SmartScreen. Signing replaces "Unknown publisher" with **SignPath Foundation** and helps the file build
+reputation faster. [SignPath Foundation](https://signpath.org) signs open-source projects for free; the certificate
+is theirs, and SignPath.io runs the signing.
 
-The workflow already signs the `.scr` (before it goes into the installer) and the installer when these repository
-secrets exist, using [Azure Artifact Signing](https://learn.microsoft.com/azure/artifact-signing/) (formerly Trusted
-Signing, about US$10 a month):
+**What's already in place:**
 
-| Secret | Where it comes from |
-|---|---|
-| `AZURE_TENANT_ID` | Your Microsoft Entra tenant (Azure portal → Microsoft Entra ID → Overview) |
-| `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` | An app registration (Entra ID → App registrations → New registration; then Certificates & secrets → New client secret) |
-| `SIGNING_ENDPOINT` | The signing account's endpoint, for example `https://eus.codesigning.azure.net/` |
-| `SIGNING_ACCOUNT` | The signing account's name |
-| `SIGNING_PROFILE` | The certificate profile's name |
+- `.github/workflows/build.yml` signs release builds (tags only) once SignPath is set up. It uploads the `.scr` to
+  SignPath, waits for it to be approved and signed, builds the installer around the signed copy, then does the same
+  for the installer. A last step fails the build if either file isn't validly signed.
+- `.signpath/artifact-configurations/screensaver.xml` and `installer.xml` tell SignPath what to sign, and require the
+  file's product name to be "PC Game Cover Art Screensaver" and its product version to be the release's version.
+- The README has the **Code signing policy** and **Privacy** sections SignPath Foundation requires.
+- The automatic updater only accepts an installer signed by the same publisher and with the same product name as the
+  installed copy, from this repository's releases. (Every SignPath Foundation certificate has the same publisher name,
+  so the product name and repository matter too.)
 
-1. In the Azure portal, create an **Artifact Signing account** (it needs an Azure subscription).
-2. Under it, complete **Identity validation** as an individual. Microsoft checks your identity; this can take a few
-   days. At the time of writing individuals must be in the USA or Canada.
-3. Create a **Certificate profile** of type **Public Trust**.
-4. Create the app registration above, and on the signing account grant it the **Artifact Signing Certificate Profile
-   Signer** role (Access control (IAM) → Add role assignment). Older pages call it *Trusted Signing Certificate
-   Profile Signer*.
-5. Add the six secrets to the repository. The next release is signed; check the Actions log for the signing steps, and
-   the `.exe`'s Properties → Digital Signatures.
+**What you do, once:**
 
-Free alternative: [SignPath Foundation](https://signpath.org) signs open-source projects at no cost after an
-application. It uses its own GitHub Action; if you're accepted, the two *Sign* steps in `build.yml` would be swapped
-for theirs.
+1. **Turn on two-factor authentication** for your GitHub account if it isn't already (SignPath Foundation requires it
+   for everyone who can commit or approve).
+2. **Apply** at <https://signpath.org/apply> (the "Get started" or application link on signpath.org). Give the
+   repository URL, say it's a Windows screensaver with an Inno Setup installer built by GitHub Actions, and that you
+   want the installer and the `.scr` signed. They check the project meets their
+   [conditions](https://signpath.org/terms): open-source license (MIT is fine), public releases, the README sections
+   above. This can take a few days to a few weeks.
+3. **Once accepted**, SignPath sets up an organization and a project for you. In SignPath:
+   - Under the project, check the **Repository URL** is this repository, and that **GitHub** is set up as a trusted
+     build system (their onboarding covers this; the workflow uses SignPath's official
+     `signpath/github-action-submit-signing-request` action).
+   - **Artifact configurations → Add**: create one with slug `screensaver` and paste in
+     `.signpath/artifact-configurations/screensaver.xml`; create another with slug `installer` from `installer.xml`.
+   - **Signing policies**: the Foundation's policy for releases (usually slug `release-signing`) with you as
+     **approver**. Note its slug.
+   - **Users → Add CI user** (or your profile → API token): create an API token for the workflow, with permission to
+     submit signing requests for the project.
+4. **In GitHub** (repository **Settings → Secrets and variables → Actions**):
+   - Secret `SIGNPATH_API_TOKEN`: the API token.
+   - Variables `SIGNPATH_ORGANIZATION_ID` (from SignPath's organization settings or URL), `SIGNPATH_PROJECT_SLUG`
+     (the project's slug), `SIGNPATH_POLICY_SLUG` (for example `release-signing`).
+
+**Each release after that:** push the tag as usual. The workflow stops at *Sign the screensaver* and SignPath emails
+you a signing request; approve it in SignPath. A few minutes later the same happens for *Sign the installer*. Each
+waits up to an hour for you. Once both are approved, the release is published with signed files; check an `.exe`'s
+Properties → Digital Signatures.
+
+Once signed releases start, keep signing every release: installed copies that are signed only accept signed updates.
+
+**If SignPath rejects the installer's product name or version:** Inno Setup pads those fields with spaces, and
+SignPath's documentation doesn't say whether it ignores them. If the first signing request for the installer fails
+on those checks, remove `product-name` and `product-version` from `installer.xml`'s `<pe-file>` in SignPath (the
+screensaver inside it is still checked), or ask SignPath support how they compare the values.
 
 ---
 

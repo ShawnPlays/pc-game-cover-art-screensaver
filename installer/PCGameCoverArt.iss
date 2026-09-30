@@ -33,6 +33,12 @@ AppPublisherURL={#RepoUrl}
 AppSupportURL={#RepoUrl}/issues
 AppUpdatesURL={#RepoUrl}/releases
 VersionInfoVersion={#AppVersion}
+; Shown in the file's Properties → Details, and checked by code signing (SignPath) and by the automatic updater.
+VersionInfoProductName={#AppName}
+VersionInfoProductVersion={#AppVersion}
+VersionInfoProductTextVersion={#AppVersion}
+VersionInfoDescription={#AppName} Setup
+VersionInfoCompany=ShawnPlays
 DefaultDirName={autopf}\PC Game Cover Art
 DisableDirPage=yes
 DisableProgramGroupPage=yes

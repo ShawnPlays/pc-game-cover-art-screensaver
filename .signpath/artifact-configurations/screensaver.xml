@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SignPath artifact configuration "screensaver": signs PCGameCoverArt.scr before it goes into the installer.
+  The workflow uploads just that one file as a GitHub Actions artifact (a ZIP) and passes the release version.
+  Paste this into SignPath: project → Artifact configurations → New, slug "screensaver".
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file path="PCGameCoverArt.scr" product-name="PC Game Cover Art Screensaver" product-version="${version}" min-matches="1" max-matches="1">
+      <authenticode-sign />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

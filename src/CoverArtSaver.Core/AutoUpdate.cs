@@ -101,12 +101,15 @@ public sealed class AutoUpdater(HttpClient http, Version currentVersion)
         return AutoUpdateResult.InstallerStarted;
     }
 
-    /// <summary>Only files served by GitHub's release downloads, over HTTPS.</summary>
+    /// <summary>
+    /// Only this project's own release downloads, over HTTPS. (Signing alone can't tell projects apart: SignPath
+    /// Foundation signs many open-source projects with the same publisher name.)
+    /// </summary>
     internal static bool IsGitHubDownload(string url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var uri)
         && uri.Scheme == Uri.UriSchemeHttps
         && uri.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase)
-        && uri.AbsolutePath.Contains("/releases/download/", StringComparison.Ordinal);
+        && uri.AbsolutePath.StartsWith("/ShawnPlays/pc-game-cover-art-screensaver/releases/download/", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Earlier runs can't delete their installer while it's running, so tidy up at the start of the next one.</summary>
     private void RemoveOldDownloads()

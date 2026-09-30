@@ -10,6 +10,8 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/ShawnPlays/pc-game-cover-art-screensaver</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ShawnPlays/pc-game-cover-art-screensaver</RepositoryUrl>
+    <!-- Product version is just "2.0.1", not "2.0.1+<commit>": code signing (SignPath) checks it matches the release. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
 </Project>

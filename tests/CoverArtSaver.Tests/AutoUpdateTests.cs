@@ -94,6 +94,7 @@ public sealed class AutoUpdateTests : IDisposable
     [Theory]
     [InlineData("http://github.com/ShawnPlays/x/releases/download/v2.2.0/PCGameCoverArtSetup_2.2.0.exe")] // not HTTPS
     [InlineData("https://example.com/releases/download/v2.2.0/PCGameCoverArtSetup_2.2.0.exe")]           // not GitHub
+    [InlineData("https://github.com/someone-else/other-app/releases/download/v2.2.0/PCGameCoverArtSetup_2.2.0.exe")] // not this project
     public async Task OnlyDownloadsFromGitHubReleases(string url)
     {
         var (updater, _, started) = Make(Release(url));

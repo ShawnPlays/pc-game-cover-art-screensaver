@@ -3,10 +3,12 @@ name: Build
 # Runs on every push and pull request. Pushing a tag like v1.0.0 also publishes a GitHub Release
 # with the installer, .scr, .pext and Playnite's installer.yaml attached.
 #
-# Optional extras, switched on by adding repository secrets (Settings → Secrets and variables → Actions):
-#   Code signing (Azure Artifact Signing, formerly Trusted Signing):
-#     AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, SIGNING_ENDPOINT, SIGNING_ACCOUNT, SIGNING_PROFILE
-#   Publishing each release to winget:  WINGET_TOKEN
+# Optional extras, switched on by adding repository secrets and variables
+# (Settings → Secrets and variables → Actions):
+#   Code signing with SignPath (free for open source, signed by SignPath Foundation), on releases only:
+#     secret SIGNPATH_API_TOKEN; variables SIGNPATH_ORGANIZATION_ID, SIGNPATH_PROJECT_SLUG, SIGNPATH_POLICY_SLUG
+#     Each release waits for an approver to approve two signing requests in SignPath (screensaver, then installer).
+#   Publishing each release to winget:  secret WINGET_TOKEN
 # Without them those steps are skipped. See docs/GUIDE.md, "Publishing".
 on:
   push:
@@ -17,9 +19,10 @@ on:
 
 permissions:
   contents: write   # needed to create releases
+  actions: read     # lets SignPath fetch the unsigned files from this run
 
 env:
-  SIGNING_ENABLED: ${{ secrets.AZURE_CLIENT_ID != '' }}
+  SIGN: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.SIGNPATH_API_TOKEN != '' }}
   WINGET_ENABLED: ${{ secrets.WINGET_TOKEN != '' }}
 
 jobs:
@@ -36,20 +39,40 @@ jobs:
         shell: pwsh
         run: ./scripts/build-release.ps1 -NoInstaller
 
+      - name: Release version
+        id: version
+        shell: bash
+        run: echo "number=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       # Sign the screensaver before it goes into the installer, so the installed copy is signed too.
-      - name: Sign the screensaver
-        if: env.SIGNING_ENABLED == 'true'
-        uses: azure/artifact-signing-action@v2
+      # SignPath signs what this run uploads, and checks it's built from this repository by this workflow.
+      - name: Upload the screensaver for signing
+        if: env.SIGN == 'true'
+        id: unsigned-scr
+        uses: actions/upload-artifact@v4
         with:
-          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-          endpoint: ${{ secrets.SIGNING_ENDPOINT }}
-          signing-account-name: ${{ secrets.SIGNING_ACCOUNT }}
-          certificate-profile-name: ${{ secrets.SIGNING_PROFILE }}
-          files: ${{ github.workspace }}\dist\PCGameCoverArt.scr
-          file-digest: SHA256
-          timestamp-digest: SHA256
+          name: unsigned-screensaver
+          path: dist/PCGameCoverArt.scr
+
+      - name: Sign the screensaver (approve it in SignPath)
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: screensaver
+          github-artifact-id: ${{ steps.unsigned-scr.outputs.artifact-id }}
+          parameters: |
+            version: "${{ steps.version.outputs.number }}"
+          wait-for-completion-timeout-in-seconds: 3600   # time for you to approve it
+          output-artifact-directory: signed/screensaver
+
+      - name: Use the signed screensaver
+        if: env.SIGN == 'true'
+        shell: pwsh
+        run: Copy-Item signed/screensaver/PCGameCoverArt.scr dist/PCGameCoverArt.scr -Force
 
       - name: Build the installer
         shell: pwsh
@@ -57,20 +80,39 @@ jobs:
           if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
           ./scripts/build-installer.ps1
 
-      - name: Sign the installer
-        if: env.SIGNING_ENABLED == 'true'
-        uses: azure/artifact-signing-action@v2
+      - name: Upload the installer for signing
+        if: env.SIGN == 'true'
+        id: unsigned-setup
+        uses: actions/upload-artifact@v4
         with:
-          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-          endpoint: ${{ secrets.SIGNING_ENDPOINT }}
-          signing-account-name: ${{ secrets.SIGNING_ACCOUNT }}
-          certificate-profile-name: ${{ secrets.SIGNING_PROFILE }}
-          files-folder: ${{ github.workspace }}\dist
-          files-folder-filter: exe
-          file-digest: SHA256
-          timestamp-digest: SHA256
+          name: unsigned-installer
+          path: dist/PCGameCoverArtSetup_*.exe
+
+      - name: Sign the installer (approve it in SignPath)
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.unsigned-setup.outputs.artifact-id }}
+          parameters: |
+            version: "${{ steps.version.outputs.number }}"
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed/installer
+
+      - name: Use the signed installer, and check both signatures
+        if: env.SIGN == 'true'
+        shell: pwsh
+        run: |
+          Copy-Item signed/installer/*.exe dist/ -Force
+          foreach ($file in Get-ChildItem dist -Include *.scr, *.exe -Recurse) {
+            $signature = Get-AuthenticodeSignature $file.FullName
+            Write-Host "$($file.Name): $($signature.Status), signed by $($signature.SignerCertificate.Subject)"
+            if ($signature.Status -ne 'Valid') { throw "$($file.Name) isn't validly signed" }
+          }
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

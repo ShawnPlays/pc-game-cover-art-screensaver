@@ -30,14 +30,25 @@ internal static class Authenticode
     }
 
     /// <summary>
-    /// An installer may run if this program isn't signed (then HTTPS from GitHub is all there is to go on), or if the
-    /// installer is validly signed by the same publisher as this program.
+    /// An installer may run if this program isn't signed (then HTTPS from this project's GitHub releases is all there
+    /// is to go on), or if the installer is validly signed by the same publisher as this program and is this product.
+    /// The product check matters because SignPath Foundation signs many open-source projects under one name.
     /// </summary>
     public static bool MayRun(string installer, string runningProgram)
     {
         var ours = SignerOf(runningProgram);
-        return ours == null || string.Equals(SignerOf(installer), ours, StringComparison.Ordinal);
+        if (ours == null)
+        {
+            return true;
+        }
+
+        return string.Equals(SignerOf(installer), ours, StringComparison.Ordinal)
+            && string.Equals(ProductName(installer), ProductName(runningProgram), StringComparison.Ordinal);
     }
+
+    /// <summary>Trimmed: Inno Setup pads its installers' version details with spaces.</summary>
+    private static string? ProductName(string path) =>
+        System.Diagnostics.FileVersionInfo.GetVersionInfo(path).ProductName?.Trim();
 
     private static bool IsValidlySigned(string path)
     {

@@ -326,6 +326,31 @@ dotnet run --project src/CoverArtSaver -- /w   # try it in a normal window
 | `src/CoverArtSaver` | WPF app that becomes the `.scr`: rendering, windows, settings dialog |
 | `tests/CoverArtSaver.Tests` | xUnit tests for the Core project |
 
+## Privacy
+
+The screensaver itself never goes online. Only two parts do, and only to GitHub, where this project is hosted:
+
+- **The settings window** asks GitHub for the latest release when it opens, to show the "new version" bar. Turn this
+  off on the **About** tab (**Check for updates when this window opens**).
+- **Automatic updates**, if turned on in the installer or on the **About** tab, ask GitHub once a day for the latest
+  release, and download its installer when there's a new version.
+
+These requests contain no information about you, your PC or your games. Like any website, GitHub sees your IP address
+and the app's version number; see [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
+Nothing else is collected or sent anywhere: your settings, game library and logs stay on your PC.
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
+[SignPath Foundation](https://signpath.org).
+
+- **Signed files:** the installer (`PCGameCoverArtSetup_x.y.z.exe`) and the screensaver (`PCGameCoverArt.scr`) on the
+  [Releases page](../../releases), from the release they're signed for onward. They're built from this repository by
+  its GitHub Actions workflow and signed only after an approver approves each release.
+- **Committers and reviewers:** [ShawnPlays](https://github.com/ShawnPlays)
+- **Approvers:** [ShawnPlays](https://github.com/ShawnPlays)
+- **Privacy:** see [Privacy](#privacy) above.
+
 ## Contributing
 
 Issues and pull requests are welcome. Run `dotnet test` before submitting. By contributing, you agree that your
