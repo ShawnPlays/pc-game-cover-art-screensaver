@@ -24,7 +24,8 @@ $out = Join-Path $root "obj\winget\$Version"
 New-Item $out -ItemType Directory -Force | Out-Null
 
 if (-not $InstallerPath) {
-    $InstallerPath = Join-Path $out "PCGameCoverArtSetup_$Version.exe"
+    # Not inside $out: "winget validate" reads every file in that folder as a manifest.
+    $InstallerPath = Join-Path (Split-Path $out) "PCGameCoverArtSetup_$Version.exe"
     Write-Host "Downloading $url"
     Invoke-WebRequest $url -OutFile $InstallerPath -UseBasicParsing
 }
@@ -32,7 +33,7 @@ $sha = (Get-FileHash $InstallerPath -Algorithm SHA256).Hash
 
 # Inno Setup registers the app under its AppId plus "_is1"; winget uses that to spot an existing install.
 $appId = (Select-String -Path "$root\installer\PCGameCoverArt.iss" -Pattern '^AppId=\{(\{[^}]+\})').Matches[0].Groups[1].Value
-$schema = '1.9.0'
+$schema = '1.12.0'
 
 function Write-Manifest($name, $text) {
     [IO.File]::WriteAllText((Join-Path $out $name), $text.Replace("`r`n", "`n"), [Text.UTF8Encoding]::new($false))

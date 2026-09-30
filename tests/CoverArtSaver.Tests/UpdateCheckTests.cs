@@ -6,11 +6,11 @@ public class UpdateCheckTests
 {
     private const string Release = """
         {
-          "tag_name": "v1.4.0",
-          "html_url": "https://github.com/ShawnPlays/pc-game-cover-art-screensaver/releases/tag/v1.4.0",
+          "tag_name": "v2.1.0",
+          "html_url": "https://github.com/ShawnPlays/pc-game-cover-art-screensaver/releases/tag/v2.1.0",
           "assets": [
             { "name": "PCGameCoverArt.scr", "browser_download_url": "https://example.com/PCGameCoverArt.scr" },
-            { "name": "PCGameCoverArtSetup_1.4.0.exe", "browser_download_url": "https://example.com/PCGameCoverArtSetup_1.4.0.exe" },
+            { "name": "PCGameCoverArtSetup_2.1.0.exe", "browser_download_url": "https://example.com/PCGameCoverArtSetup_2.1.0.exe" },
             { "name": "installer.yaml", "browser_download_url": "https://example.com/installer.yaml" }
           ]
         }
@@ -19,19 +19,19 @@ public class UpdateCheckTests
     [Fact]
     public void FindsANewerReleaseAndItsInstaller()
     {
-        var update = UpdateCheck.Parse(Release, new Version(1, 3, 2, 0));
+        var update = UpdateCheck.Parse(Release, new Version(2, 0, 0, 0));
 
         Assert.NotNull(update);
-        Assert.Equal(new Version(1, 4, 0), update.Version);
-        Assert.Equal("https://example.com/PCGameCoverArtSetup_1.4.0.exe", update.InstallerUrl);
-        Assert.Equal("PCGameCoverArtSetup_1.4.0.exe", update.InstallerName);
-        Assert.EndsWith("/releases/tag/v1.4.0", update.ReleaseUrl);
+        Assert.Equal(new Version(2, 1, 0), update.Version);
+        Assert.Equal("https://example.com/PCGameCoverArtSetup_2.1.0.exe", update.InstallerUrl);
+        Assert.Equal("PCGameCoverArtSetup_2.1.0.exe", update.InstallerName);
+        Assert.EndsWith("/releases/tag/v2.1.0", update.ReleaseUrl);
     }
 
     [Theory]
-    [InlineData(1, 4, 0, 0)]  // same version (the app's own version has four parts)
-    [InlineData(1, 4, 1, 0)]  // newer than GitHub's (a local build)
-    [InlineData(2, 0, 0, 0)]
+    [InlineData(2, 1, 0, 0)]  // same version (the app's own version has four parts)
+    [InlineData(2, 1, 1, 0)]  // newer than GitHub's (a local build)
+    [InlineData(3, 0, 0, 0)]
     public void NoUpdateWhenAlreadyCurrentOrNewer(int major, int minor, int build, int revision) =>
         Assert.Null(UpdateCheck.Parse(Release, new Version(major, minor, build, revision)));
 

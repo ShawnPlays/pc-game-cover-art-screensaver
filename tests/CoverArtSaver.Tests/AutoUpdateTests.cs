@@ -7,11 +7,11 @@ namespace CoverArtSaver.Tests;
 public class AutoUpdateTests
 {
     private const string InstallerUrl =
-        "https://github.com/ShawnPlays/pc-game-cover-art-screensaver/releases/download/v1.5.0/PCGameCoverArtSetup_1.5.0.exe";
+        "https://github.com/ShawnPlays/pc-game-cover-art-screensaver/releases/download/v2.2.0/PCGameCoverArtSetup_2.2.0.exe";
 
     private static string Release(string installerUrl = InstallerUrl) => $$"""
-        { "tag_name": "v1.5.0", "html_url": "https://github.com/x/releases/tag/v1.5.0",
-          "assets": [ { "name": "PCGameCoverArtSetup_1.5.0.exe", "browser_download_url": "{{installerUrl}}" } ] }
+        { "tag_name": "v2.2.0", "html_url": "https://github.com/x/releases/tag/v2.2.0",
+          "assets": [ { "name": "PCGameCoverArtSetup_2.2.0.exe", "browser_download_url": "{{installerUrl}}" } ] }
         """;
 
     /// <summary>Answers the "latest release" call with <paramref name="json"/> and any download with a few bytes.</summary>
@@ -28,7 +28,7 @@ public class AutoUpdateTests
     }
 
     private static (AutoUpdater Updater, FakeGitHub GitHub, List<(string Path, string Args)> Started) Make(
-        string json, string current = "1.4.0", bool running = false, bool trusted = true)
+        string json, string current = "2.1.0", bool running = false, bool trusted = true)
     {
         var github = new FakeGitHub(json);
         var started = new List<(string, string)>();
@@ -63,7 +63,7 @@ public class AutoUpdateTests
     [Fact]
     public async Task NothingHappensWhenUpToDate()
     {
-        var (updater, _, started) = Make(Release(), current: "1.5.0");
+        var (updater, _, started) = Make(Release(), current: "2.2.0");
         Assert.Equal(AutoUpdateResult.UpToDate, await updater.RunAsync());
         Assert.Empty(started);
     }
@@ -86,8 +86,8 @@ public class AutoUpdateTests
     }
 
     [Theory]
-    [InlineData("http://github.com/ShawnPlays/x/releases/download/v1.5.0/PCGameCoverArtSetup_1.5.0.exe")] // not HTTPS
-    [InlineData("https://example.com/releases/download/v1.5.0/PCGameCoverArtSetup_1.5.0.exe")]           // not GitHub
+    [InlineData("http://github.com/ShawnPlays/x/releases/download/v2.2.0/PCGameCoverArtSetup_2.2.0.exe")] // not HTTPS
+    [InlineData("https://example.com/releases/download/v2.2.0/PCGameCoverArtSetup_2.2.0.exe")]           // not GitHub
     public async Task OnlyDownloadsFromGitHubReleases(string url)
     {
         var (updater, _, started) = Make(Release(url));
