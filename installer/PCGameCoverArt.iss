@@ -33,7 +33,7 @@ AppPublisherURL={#RepoUrl}
 AppSupportURL={#RepoUrl}/issues
 AppUpdatesURL={#RepoUrl}/releases
 VersionInfoVersion={#AppVersion}
-; Shown in the file's Properties → Details, and checked by code signing (SignPath) and by the automatic updater.
+; Shown in the file's Properties → Details. Checked by the automatic updater, and by code signing if it's set up.
 VersionInfoProductName={#AppName}
 VersionInfoProductVersion={#AppVersion}
 VersionInfoProductTextVersion={#AppVersion}

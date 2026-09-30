@@ -5,7 +5,8 @@ name: Build
 #
 # Optional extras, switched on by adding repository secrets and variables
 # (Settings → Secrets and variables → Actions):
-#   Code signing with SignPath (free for open source, signed by SignPath Foundation), on releases only:
+#   Code signing with SignPath, on releases only. Not set up yet: releases are unsigned for now (see docs/GUIDE.md,
+#   "Code signing"). When it is:
 #     secret SIGNPATH_API_TOKEN; variables SIGNPATH_ORGANIZATION_ID, SIGNPATH_PROJECT_SLUG, SIGNPATH_POLICY_SLUG
 #     Each release waits for an approver to approve two signing requests in SignPath (screensaver, then installer).
 #   Publishing each release to winget:  secret WINGET_TOKEN

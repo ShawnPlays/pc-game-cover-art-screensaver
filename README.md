@@ -339,17 +339,15 @@ These requests contain no information about you, your PC or your games. Like any
 and the app's version number; see [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
 Nothing else is collected or sent anywhere: your settings, game library and logs stay on your PC.
 
-## Code signing policy
+## Code signing
 
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
-[SignPath Foundation](https://signpath.org).
+Releases aren't code-signed yet, so the first time you download and run the installer, your browser and Windows
+SmartScreen may warn about it (see [step 1 of Install](#1-run-the-installer)). Updates installed by the screensaver
+itself don't show these warnings.
 
-- **Signed files:** the installer (`PCGameCoverArtSetup_x.y.z.exe`) and the screensaver (`PCGameCoverArt.scr`) on the
-  [Releases page](../../releases), from the release they're signed for onward. They're built from this repository by
-  its GitHub Actions workflow and signed only after an approver approves each release.
-- **Committers and reviewers:** [ShawnPlays](https://github.com/ShawnPlays)
-- **Approvers:** [ShawnPlays](https://github.com/ShawnPlays)
-- **Privacy:** see [Privacy](#privacy) above.
+Every file on the [Releases page](../../releases) is built from this repository's source by its GitHub Actions
+workflow, not on anyone's PC. To check a download is the real thing, compare its SHA-256 with the one GitHub shows next
+to the file on the release page: in PowerShell, run `Get-FileHash PCGameCoverArtSetup_x.y.z.exe`.
 
 ## Contributing
 

@@ -296,7 +296,7 @@ still goes out without a What's new and the Actions run shows a warning. Try it 
 - The installer, `.scr`, `.pext` and `installer.yaml` are built and attached to the GitHub Release.
 - Everyone on 2.0.0 or later who left **Install updates automatically** on gets it within a day, silently
   (`AutoUpdate.cs`). Once releases are signed, that updater refuses installers signed by anyone else, so keep signing
-  every release with the same certificate profile once you start.
+  every release with the same certificate once you start.
 - Everyone on 2.0.0 or later also sees the new version in the settings window, with an **Update now** button
   (`UpdateCheck.cs` asks GitHub's "latest release" API; the button downloads and runs the `PCGameCoverArtSetup_*.exe`
   asset). Nothing to do.
@@ -344,60 +344,55 @@ keeps it updated.
    *Publish to winget* step then opens the pull request for each new release by itself. It's skipped while the secret
    is missing.
 
-#### Code signing (SignPath Foundation)
+#### Code signing
 
-Unsigned downloads get "isn't commonly downloaded" warnings from browsers and a "Windows protected your PC" screen
-from SmartScreen. Signing replaces "Unknown publisher" with **SignPath Foundation** and helps the file build
-reputation faster. [SignPath Foundation](https://signpath.org) signs open-source projects for free; the certificate
-is theirs, and SignPath.io runs the signing.
+**Status: releases aren't signed.** In September 2026 SignPath Foundation (free signing for open source) declined the
+application: they want a project to show outside signs of trust first, such as GitHub stars, forks and contributors,
+articles, or discussion on Reddit, YouTube and the like. They welcome a new application once the project is better
+known.
 
-**What's already in place:**
+What being unsigned means: browsers say the installer "isn't commonly downloaded" and SmartScreen shows "Windows
+protected your PC" the first time someone downloads and runs it; the README's install steps walk people through that.
+Updates installed by the app itself (**Update now** and the daily task) don't get these warnings, and neither will
+installs through winget. People can check a download against the SHA-256 GitHub shows next to each release file.
 
-- `.github/workflows/build.yml` signs release builds (tags only) once SignPath is set up. It uploads the `.scr` to
-  SignPath, waits for it to be approved and signed, builds the installer around the signed copy, then does the same
-  for the installer. A last step fails the build if either file isn't validly signed.
+**Ready for when there's a certificate:**
+
+- `.github/workflows/build.yml` already has SignPath signing steps for release builds. They're skipped until the
+  `SIGNPATH_API_TOKEN` secret exists. They send the `.scr` for signing, build the installer around the signed copy,
+  sign the installer, then fail the build unless both signatures are valid.
 - `.signpath/artifact-configurations/screensaver.xml` and `installer.xml` tell SignPath what to sign, and require the
-  file's product name to be "PC Game Cover Art Screensaver" and its product version to be the release's version.
-- The README has the **Code signing policy** and **Privacy** sections SignPath Foundation requires.
-- The automatic updater only accepts an installer signed by the same publisher and with the same product name as the
-  installed copy, from this repository's releases. (Every SignPath Foundation certificate has the same publisher name,
-  so the product name and repository matter too.)
+  product name "PC Game Cover Art Screensaver" and the release's version.
+- The automatic updater (`Interop/Authenticode.cs`) already handles signed releases: once the installed copy is
+  signed, it only accepts installers signed by the same publisher, with the same product name, from this repository.
+  Unsigned installed copies accept either, so the first signed release reaches everyone.
 
-**What you do, once:**
+**Options, when you want signing:**
 
-1. **Turn on two-factor authentication** for your GitHub account if it isn't already (SignPath Foundation requires it
-   for everyone who can commit or approve).
-2. **Apply** at <https://signpath.org/apply> (the "Get started" or application link on signpath.org). Give the
-   repository URL, say it's a Windows screensaver with an Inno Setup installer built by GitHub Actions, and that you
-   want the installer and the `.scr` signed. They check the project meets their
-   [conditions](https://signpath.org/terms): open-source license (MIT is fine), public releases, the README sections
-   above. This can take a few days to a few weeks.
-3. **Once accepted**, SignPath sets up an organization and a project for you. In SignPath:
-   - Under the project, check the **Repository URL** is this repository, and that **GitHub** is set up as a trusted
-     build system (their onboarding covers this; the workflow uses SignPath's official
-     `signpath/github-action-submit-signing-request` action).
-   - **Artifact configurations → Add**: create one with slug `screensaver` and paste in
-     `.signpath/artifact-configurations/screensaver.xml`; create another with slug `installer` from `installer.xml`.
-   - **Signing policies**: the Foundation's policy for releases (usually slug `release-signing`) with you as
-     **approver**. Note its slug.
-   - **Users → Add CI user** (or your profile → API token): create an API token for the workflow, with permission to
-     submit signing requests for the project.
-4. **In GitHub** (repository **Settings → Secrets and variables → Actions**):
-   - Secret `SIGNPATH_API_TOKEN`: the API token.
-   - Variables `SIGNPATH_ORGANIZATION_ID` (from SignPath's organization settings or URL), `SIGNPATH_PROJECT_SLUG`
-     (the project's slug), `SIGNPATH_POLICY_SLUG` (for example `release-signing`).
+| Option | Cost | Notes |
+|---|---|---|
+| [SignPath Foundation](https://signpath.org) | Free | Reapply at <https://signpath.org/apply> once the project has more visibility. Everything above is ready for it. |
+| [SignPath](https://about.signpath.io) paid subscription | See their pricing | Same setup as the Foundation, without the visibility requirement. |
+| [Azure Artifact Signing](https://learn.microsoft.com/azure/artifact-signing/) | About US$10 a month | Needs an Azure account and Microsoft's identity check; individuals currently must be in the USA or Canada. The two SignPath steps in `build.yml` would be swapped for `azure/artifact-signing-action` (this project used it briefly; see Git history around v2.0.0). |
+| A certificate from a certificate authority | Typically a few hundred dollars a year | The key must be kept on a hardware token or a cloud key service. |
 
-**Each release after that:** push the tag as usual. The workflow stops at *Sign the screensaver* and SignPath emails
-you a signing request; approve it in SignPath. A few minutes later the same happens for *Sign the installer*. Each
-waits up to an hour for you. Once both are approved, the release is published with signed files; check an `.exe`'s
-Properties → Digital Signatures.
+**Setting up SignPath, once accepted** (Foundation or paid):
 
-Once signed releases start, keep signing every release: installed copies that are signed only accept signed updates.
+1. Turn on two-factor authentication for your GitHub account (required for committers and approvers).
+2. Add back a **Code signing policy** section to the README. The Foundation requires the line "Free code signing
+   provided by SignPath.io, certificate by SignPath Foundation", the team roles (committers, reviewers, approvers),
+   and a link to the **Privacy** section.
+3. In SignPath: check the project's repository URL and that GitHub is a trusted build system; add artifact
+   configurations `screensaver` and `installer` from the two XML files; make yourself approver on the release signing
+   policy; create an API token for the workflow.
+4. In GitHub (**Settings → Secrets and variables → Actions**): secret `SIGNPATH_API_TOKEN`; variables
+   `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG` and `SIGNPATH_POLICY_SLUG` (for example `release-signing`).
+5. Tag a release. SignPath emails you two signing requests (screensaver, then installer); approve each within the
+   hour the workflow waits. Check the published `.exe`'s Properties → Digital Signatures.
 
-**If SignPath rejects the installer's product name or version:** Inno Setup pads those fields with spaces, and
-SignPath's documentation doesn't say whether it ignores them. If the first signing request for the installer fails
-on those checks, remove `product-name` and `product-version` from `installer.xml`'s `<pe-file>` in SignPath (the
-screensaver inside it is still checked), or ask SignPath support how they compare the values.
+Inno Setup pads the installer's product name and version with spaces. SignPath's documentation doesn't say whether it
+ignores them; if the installer's signing request fails on those checks, remove `product-name` and `product-version`
+from `installer.xml` in SignPath (the screensaver inside is still checked).
 
 ---
 
