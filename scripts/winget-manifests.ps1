@@ -6,9 +6,9 @@
   The installer's SHA-256 is taken from the file on the GitHub Release, which is what winget will download.
 
 .EXAMPLE
-  ./scripts/winget-manifests.ps1 -Version 1.4.0          # writes obj\winget\1.4.0\*.yaml
-  winget validate --manifest obj\winget\1.4.0
-  wingetcreate submit --token <token> obj\winget\1.4.0
+  ./scripts/winget-manifests.ps1 -Version 2.0.0          # writes obj\winget\2.0.0\*.yaml
+  winget validate --manifest obj\winget\2.0.0
+  wingetcreate submit --token <token> obj\winget\2.0.0
 #>
 param(
     [Parameter(Mandatory)][string]$Version,

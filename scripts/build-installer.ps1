@@ -5,7 +5,7 @@
   Needs Inno Setup 6: winget install JRSoftware.InnoSetup
 
 .EXAMPLE
-  ./scripts/build-installer.ps1 -Version 1.4.0
+  ./scripts/build-installer.ps1 -Version 2.0.0
 #>
 param(
     [string]$Version = $(if ($env:GITHUB_REF_NAME -match '^v(\d+\.\d+\.\d+)') { $Matches[1] } else { '0.0.0' })

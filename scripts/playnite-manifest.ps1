@@ -7,7 +7,7 @@
   The changelog comes from the README's "#### Notes for version x.y.z" section, like the release notes.
 
 .EXAMPLE
-  ./scripts/playnite-manifest.ps1 -Version 1.4.0 -OutFile dist\installer.yaml
+  ./scripts/playnite-manifest.ps1 -Version 2.0.0 -OutFile dist\installer.yaml
 #>
 param(
     [Parameter(Mandatory)][string]$Version,

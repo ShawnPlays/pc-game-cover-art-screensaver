@@ -25,8 +25,8 @@ New in 1.3.0: it can also play the game soundtracks you've installed through Ste
   shuffle, start at a random track, and volume. It always uses Steam, even when your games come from Playnite
 - Works with **Playnite** (all your launchers in one library, through a small add-on) or **Steam** (read directly from
   Steam's own files, with nothing extra to install). No account login or API keys, and no internet connection needed
-- **Easy to install and update:** one installer sets up the screensaver and, for Playnite, the add-on. The settings
-  window tells you when there's a new version and installs it with one click
+- **Easy to install and update:** one installer sets up the screensaver and, for Playnite, the add-on. New versions
+  install themselves once a day (optional), or with one click from the settings window
 - Standard screensaver behavior: full screen on every monitor, live preview in Windows' Screen Saver Settings, and a settings dialog
 - **Optional content filter** hides games with nudity or sexual content, based on their tags, genres, features, categories and age ratings (for Steam: its store tags and content descriptors). You can edit the word list.
 - Optional stricter filter for anything rated Mature/18+
@@ -72,7 +72,7 @@ You need:
    click **More info** → **Run anyway**. These warnings appear because the files aren't code-signed yet.
 2. Run it and click **Yes** when Windows asks for administrator permission. The screensaver goes in Windows' own
    screensaver folder, `C:\Windows\System32`.
-3. Leave **Use it as my screensaver** ticked, and click **Install**.
+3. Leave **Use it as my screensaver** and **Install updates automatically** ticked, and click **Install**.
 4. On the last page:
    - **Playnite users:** leave **Install or update the Playnite add-on** ticked. Playnite asks whether to install the
      add-on; click **Yes**, then restart Playnite. The add-on saves a list of your games for the screensaver to read,
@@ -128,20 +128,28 @@ Each release also has the two files on their own:
 You don't need to uninstall anything first, and your settings are kept. Check the notes for your new version below
 (they also appear on each release's download page).
 
-- **Easiest:** when a new version is out, the screensaver's settings window shows a yellow bar at the top. Click
-  **Update now**: it downloads and runs the new installer. It checks when the settings window opens; you can turn that
-  off on the **About** tab, where **Check now** also checks by hand. The screensaver itself never goes online.
+- **Automatically:** if you left **Install updates automatically** ticked in the installer, there's nothing to do.
+  Once a day, some time in the afternoon (or soon after you next switch the PC on), Windows checks GitHub for a new
+  version and installs it quietly in the background. It waits for another day if the screensaver or its settings are
+  open. Turn it on or off on the settings window's **About** tab (Windows asks for administrator permission). What it
+  did is logged in `C:\Program Files\PC Game Cover Art\update.log`.
+- **With one click:** when a new version is out, the screensaver's settings window shows a yellow bar at the top.
+  Click **Update now**: it downloads and runs the new installer. It checks when the settings window opens; you can
+  turn that off on the **About** tab, where **Check now** also checks by hand.
 - **Or** download the new `PCGameCoverArtSetup_x.y.z.exe` from the [Releases page](../../releases/latest) and run it.
 
-Either way, **Playnite users** should leave **Install or update the Playnite add-on** ticked on the installer's last
-page, click **Yes** in Playnite, and restart Playnite, so the add-on stays in step with the screensaver.
+The screensaver itself never goes online; only the daily update task and the settings window do.
+
+**Playnite users:** automatic updates install the screensaver only, because Playnite has to install its own add-ons.
+When you run an installer yourself (or use **Update now**), leave **Install or update the Playnite add-on** ticked on
+its last page, click **Yes** in Playnite, and restart Playnite. The version notes say when an add-on update matters.
 
 The installer closes the screensaver and its settings first, so Windows never complains that the file is in use.
 
 <details>
-<summary>Upgrading without the installer, or from a version before 1.4.0</summary>
+<summary>Upgrading without the installer, or from a version before 2.0.0</summary>
 
-Versions before 1.4.0 had no installer or update button. To move to the installer, just run it: it replaces the
+Versions before 2.0.0 had no installer or update button. To move to the installer, just run it: it replaces the
 screensaver in `C:\Windows\System32` and keeps your settings. If you had installed the `.scr` somewhere else (without
 administrator rights), you can delete that old copy afterwards.
 
@@ -158,12 +166,14 @@ To upgrade by hand instead:
 
 </details>
 
-#### Notes for version 1.4.0
+#### Notes for version 2.0.0
 
-- New in 1.4.0: an **installer**, `PCGameCoverArtSetup_1.4.0.exe`. One download sets everything up: it puts the
+- New in 2.0.0: an **installer**, `PCGameCoverArtSetup_2.0.0.exe`. One download sets everything up: it puts the
   screensaver where Windows looks for it, can make it your screensaver, and offers to install the Playnite add-on.
   It also adds an uninstaller to Windows' Installed apps.
-- The settings window now **tells you when there's a new version** and can install it with one click. It asks GitHub
+- **Automatic updates:** the installer can set up a daily check that installs new versions by itself, quietly in the
+  background. It's ticked by default; change it on the About tab.
+- The settings window also **tells you when there's a new version** and can install it with one click. It asks GitHub
   when the window opens; turn that off on the About tab. The screensaver itself still never goes online.
 - To move to the installer, just run it over your current version; your settings are kept. See
   [Upgrade from an earlier version](#upgrade-from-an-earlier-version).
@@ -210,7 +220,7 @@ To upgrade by hand instead:
 ### Uninstall
 
 1. Open **Settings** → **Apps** → **Installed apps**, find **PC Game Cover Art Screensaver**, and click **…** →
-   **Uninstall**. If it was your screensaver, Windows goes back to none. (Installed by hand, without the installer? In
+   **Uninstall**. If it was your screensaver, Windows goes back to none. The daily update task is removed too. (Installed by hand, without the installer? In
    Screen Saver Settings choose a different screensaver, then delete `C:\Windows\System32\PCGameCoverArt.scr`.)
 2. If you use Playnite: open the main menu (☰) → **Add-ons…** → **Installed** → **Generic**. Select **PC Game Cover Art
    Exporter**, click **Uninstall**, and restart Playnite.
@@ -231,6 +241,7 @@ To upgrade by hand instead:
 | Mosaic shows no large tiles | Under **Settings… → Display → Mosaic**, the line below the large tile options says how many games qualify. If it's 0, choose **Any game, at random**, untick some **Leave out** options, or raise **Played for at most** or lower **Review rating**. Playnite users: update the add-on (see [Upgrade](#upgrade-from-an-earlier-version)) and use **Export library for screensaver now**. Playnite games also need a Community or Critic Score, which comes from downloading metadata. |
 | No music plays | Open **Settings… → Music**. The line under the options says how many soundtracks were found. Soundtracks have to be installed in Steam: in your Steam library, pick **Soundtracks** in the filter, then install the ones you want. Music doesn't play in the small preview in Screen Saver Settings, only in full screen. |
 | Windows says the file is in use when you replace `PCGameCoverArt.scr` by hand | Close Screen Saver Settings (its preview is running the old version) and try again. The installer avoids this by closing it for you. |
+| Automatic updates don't seem to happen | Look in `C:\Program Files\PC Game Cover Art\update.log`: each daily run says what it did. It skips a day while the screensaver or its settings are open, and needs an internet connection. On the **About** tab, check **Install updates automatically** is ticked. |
 | The settings window can't check for updates | It needs to reach GitHub. Check your connection, or turn off **Check for updates** on the **About** tab and get new versions from the [Releases page](../../releases/latest). |
 | **PCGameCoverArt** isn't in Windows' list | Run the installer again. If you installed by hand, check that `PCGameCoverArt.scr` is in `C:\Windows\System32`, then reopen Screen Saver Settings. |
 | It doesn't start, or closes immediately | Run the installer again. If you installed by hand, unblock the file (right-click → **Properties** → **Unblock**) and copy it again. |

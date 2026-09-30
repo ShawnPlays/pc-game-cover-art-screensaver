@@ -5,6 +5,11 @@ public static class Log
 {
     private static readonly object Gate = new();
 
+    /// <summary>Log somewhere other than the user's data folder (the updater runs as SYSTEM, which has no such folder).</summary>
+    public static string? FileOverride { get; set; }
+
+    private static string LogFile => FileOverride ?? AppPaths.LogFile;
+
     public static void Info(string message) => Write("INFO", message, null);
 
     public static void Error(string message, Exception? ex = null) => Write("ERROR", message, ex);
@@ -15,14 +20,14 @@ public static class Log
         {
             lock (Gate)
             {
-                Directory.CreateDirectory(AppPaths.DataFolder);
-                var file = new FileInfo(AppPaths.LogFile);
+                Directory.CreateDirectory(Path.GetDirectoryName(LogFile)!);
+                var file = new FileInfo(LogFile);
                 if (file.Exists && file.Length > 1_000_000)
                 {
                     file.Delete(); // keep it small; this is a screensaver, not a server
                 }
 
-                File.AppendAllText(AppPaths.LogFile,
+                File.AppendAllText(LogFile,
                     $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{level}] {message}{(ex != null ? Environment.NewLine + ex : "")}{Environment.NewLine}");
             }
         }

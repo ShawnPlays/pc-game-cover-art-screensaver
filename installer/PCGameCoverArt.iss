@@ -1,12 +1,13 @@
 ; Installer for PC Game Cover Art Screensaver, built with Inno Setup 6 (https://jrsoftware.org/isinfo.php).
 ; scripts/build-release.ps1 compiles it after building the screensaver and add-on:
-;   ISCC.exe /DAppVersion=1.4.0 /DDistDir=..\dist installer\PCGameCoverArt.iss
+;   ISCC.exe /DAppVersion=2.0.0 /DDistDir=..\dist installer\PCGameCoverArt.iss
 ;
 ; What it does:
 ;   - puts PCGameCoverArt.scr in C:\Windows\System32, where Windows' Screen Saver Settings lists it
 ;     (an installer's files aren't marked as downloaded, so there's nothing to unblock)
 ;   - closes a running copy first, so upgrading never fails with "file in use"
 ;   - optionally makes it the active screensaver
+;   - optionally sets up automatic updates (a daily scheduled task that runs the screensaver with /update)
 ;   - if Playnite is installed, offers to install or update the Playnite add-on
 ;   - adds an entry to Windows' Installed apps, so it can be uninstalled normally
 ; Running a newer installer over an older one upgrades it and keeps the user's settings.
@@ -55,6 +56,8 @@ UsedUserAreasWarning=no
 
 [Tasks]
 Name: activate; Description: "Use it as my screensaver"
+; A daily scheduled task (as SYSTEM) runs "PCGameCoverArt.scr /update"; see AutoUpdater in the source.
+Name: autoupdate; Description: "Install updates automatically (checks GitHub once a day)"
 
 [Files]
 Source: "{#DistDir}\PCGameCoverArt.scr"; DestDir: "{sys}"; Flags: ignoreversion
@@ -69,6 +72,9 @@ Root: HKCU; Subkey: "Control Panel\Desktop"; ValueType: string; ValueName: "SCRN
 Root: HKCU; Subkey: "Control Panel\Desktop"; ValueType: string; ValueName: "ScreenSaveActive"; ValueData: "1"; Tasks: activate
 
 [Run]
+; Add or remove the daily update task to match the choice above (also on silent upgrades, which keep the choice).
+Filename: "{sys}\PCGameCoverArt.scr"; Parameters: "/autoupdate on"; Flags: runhidden waituntilterminated; Tasks: autoupdate
+Filename: "{sys}\PCGameCoverArt.scr"; Parameters: "/autoupdate off"; Flags: runhidden waituntilterminated; Tasks: not autoupdate
 ; Opening the .pext hands it to Playnite (Playnite.DesktopApp.exe --installext), which asks before installing.
 ; Run as the signed-in user, not as administrator, so Playnite starts normally.
 Filename: "{app}\PCGameCoverArtExporter.pext"; Description: "Install or update the Playnite add-on (Playnite users only)"; \
@@ -77,7 +83,8 @@ Filename: "{sys}\PCGameCoverArt.scr"; Parameters: "/c"; Description: "Open the s
   Flags: postinstall runasoriginaluser nowait skipifsilent
 
 [UninstallRun]
-Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM PCGameCoverArt.scr /T"; Flags: runhidden; RunOnceId: "StopScreensaver"
+Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""PC Game Cover Art Screensaver update"" /F"; Flags: runhidden; RunOnceId: "RemoveUpdateTask"
+Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM PCGameCoverArt.scr"; Flags: runhidden; RunOnceId: "StopScreensaver"
 
 [Messages]
 FinishedLabel=The screensaver is installed.%n%nWindows' Screen Saver Settings (Start → "Change screen saver") lists it as PCGameCoverArt. Your settings from any earlier version are kept.
@@ -95,7 +102,8 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   ResultCode: Integer;
 begin
-  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM PCGameCoverArt.scr /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  // No /T: the automatic updater (also PCGameCoverArt.scr) starts this installer, and /T would close it too.
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM PCGameCoverArt.scr', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   Result := '';
 end;
 

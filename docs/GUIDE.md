@@ -149,7 +149,8 @@ share nothing but the JSON file, which is why this split works.
 | `MosaicLayout.cs` | **The mosaic style.** `MosaicLayout.Fit` turns "N covers across" into a grid whose row count follows the screen's shape. `MosaicPlanner` picks which tile flips next (never one that's still turning) and which game it flips to (the next one in the list that isn't already on screen). It's seeded, so mirrored monitors flip identically. The wall is a list of "pieces", each 1×1 or N×N cells. A large piece that's picked moves: the planner returns a `MosaicStep` that removes it and the small tiles under its new spot, and adds normal tiles to the space it left. |
 | `FeaturedGames.cs` | Which games get large mosaic tiles. In *barely played* mode: little or no play time, and a minimum rating (Steam's rating tiers become percentage thresholds for Playnite's Community or Critic Score). It can also leave out games whose play time can't be trusted: ones added to Playnite by hand, and ones from chosen library integrations (the add-on exports each game's `Library` name and `AddedManually`). In *random* mode every game qualifies; `MosaicView` then shuffles them (seeded, so mirrored monitors match) so large tiles don't follow the Order setting, and every game can also appear as a normal tile. |
 | `SaverSettings.cs` | Every option and its default, saved as JSON |
-| `UpdateCheck.cs` | Asks GitHub's "latest release" API whether there's a newer version, and finds its installer. Only the settings window uses it, never the screensaver. |
+| `UpdateCheck.cs` | Asks GitHub's "latest release" API whether there's a newer version, and finds its installer. Used by the settings window and the automatic updater, never the screensaver. |
+| `AutoUpdate.cs` | **Automatic updates.** The installer registers a daily scheduled task (`TaskXml`) that runs `PCGameCoverArt.scr /update` as SYSTEM, so there's no administrator prompt. `AutoUpdater` skips the day if the screensaver is open, downloads the new installer into a fresh folder only SYSTEM can write to, lets a signature check veto it, and starts it silently. It doesn't wait: the installer replaces (and closes) this very program. |
 
 Everything here is plain .NET, so it's unit-tested in `tests/`. Try changing `SideSpacing` in `CoverflowMath.cs`
 and rerun `/w` to see the effect.
@@ -165,6 +166,8 @@ and rerun `/w` to see the effect.
 | `Rendering/MosaicTile.cs` | One tile. A flip squeezes it to a sliver while darkening it, swaps the cover, and opens it back up, so it reads as a card turning over. `TurnAway` and `TurnIn` do just the first or the second half, for tiles that leave or arrive when a large tile moves. |
 | `Rendering/CoverTextureCache.cs` | Loads images on a background thread at a reduced size, which saves a lot of memory. It pre-computes each reflection by flipping and darkening pixels once, which is much cheaper than doing it live in 3D. It keeps only nearby covers in memory. |
 | `Audio/SoundtrackPlayer.cs` | Plays the soundtracks with WPF's `MediaPlayer`: fades in over 3 seconds, moves to the next track when one ends, and skips files Windows can't play. |
+| `Updates/AutoUpdateService.cs` | The Windows side of automatic updates: `/update` runs `AutoUpdater` and logs to `C:\Program Files\PC Game Cover Art\update.log`; `/autoupdate on\|off` (run elevated by the installer or the About tab) adds or removes the scheduled task with `schtasks`; `IsEnabled` reads it back through Task Scheduler's COM API. |
+| `Interop/Authenticode.cs` | Windows' signature check (`WinVerifyTrust`). Once releases are signed, the automatic updater only runs an installer signed by the same publisher as the installed copy. |
 | `Windows/ScreensaverSession.cs` | One window per monitor, plus mirror, independent, or primary-only mode. It also starts the music (once, not per monitor) and stops it on exit. The small preview doesn't go through here, so it's silent. |
 | `Windows/ScreensaverWindow.cs` | Borderless topmost window. It exits on a key, a click, or a real mouse move (small jitter is ignored). |
 | `Windows/PreviewHost.cs` | Draws inside Windows' tiny preview monitor as a Win32 child window, and exits when that window goes away |
@@ -194,17 +197,17 @@ To be safe, run the screensaver in `/w` mode for a while after changing the filt
 ## Stage 7: Build release files and install for real
 
 ```powershell
-./scripts/build-release.ps1 -Version 1.4.0
+./scripts/build-release.ps1 -Version 2.0.0
 ```
 
 This runs the tests and then creates:
 
-- `dist/PCGameCoverArtSetup_1.4.0.exe`: the installer most people download. It's built by
+- `dist/PCGameCoverArtSetup_2.0.0.exe`: the installer most people download. It's built by
   [Inno Setup](https://jrsoftware.org/isinfo.php) from `installer/PCGameCoverArt.iss` (see `scripts/build-installer.ps1`);
   install Inno Setup with `winget install JRSoftware.InnoSetup`
 - `dist/PCGameCoverArt.scr`: one self-contained file, about 70 MB, because it bundles .NET so users don't
   need to install it
-- `dist/PCGameCoverArtExporter_1.4.0.pext`: the Playnite add-on package, which is a zip file
+- `dist/PCGameCoverArtExporter_2.0.0.pext`: the Playnite add-on package, which is a zip file
 - `dist/installer.yaml`: tells Playnite's add-on browser about this version of the add-on (see *Publishing* below)
 
 The `-Version` number is stamped into both files and into the add-on's `extension.yaml`. Keep `<Version>` in both
@@ -291,7 +294,10 @@ still goes out without a What's new and the Actions run shows a warning. Try it 
 **What happens by itself on every release** (a `v*` tag):
 
 - The installer, `.scr`, `.pext` and `installer.yaml` are built and attached to the GitHub Release.
-- Everyone on 1.4.0 or later sees the new version in the settings window, with an **Update now** button
+- Everyone on 2.0.0 or later who left **Install updates automatically** on gets it within a day, silently
+  (`AutoUpdate.cs`). Once releases are signed, that updater refuses installers signed by anyone else, so keep signing
+  every release with the same certificate profile once you start.
+- Everyone on 2.0.0 or later also sees the new version in the settings window, with an **Update now** button
   (`UpdateCheck.cs` asks GitHub's "latest release" API; the button downloads and runs the `PCGameCoverArtSetup_*.exe`
   asset). Nothing to do.
 - `installer.yaml` is what Playnite's add-on browser reads. It's always at
@@ -305,7 +311,7 @@ still goes out without a What's new and the Actions run shows a warning. Try it 
 Once listed, Playnite users can install the add-on from Playnite (**Add-ons… → Browse → Generic**), and Playnite
 offers them each new version automatically.
 
-1. Make sure a release with `installer.yaml` attached exists (1.4.0 or later), and that
+1. Make sure a release with `installer.yaml` attached exists (2.0.0 or later), and that
    `https://github.com/ShawnPlays/pc-game-cover-art-screensaver/releases/latest/download/installer.yaml` downloads.
 2. Go to <https://github.com/JosefNemec/PlayniteAddonDatabase/tree/master/addons/generic>, click **Add file → Create
    new file**, name it `ShawnPlays_CoverArtExporter.yaml`, and paste in the contents of
@@ -322,12 +328,12 @@ If you change the add-on's name, description or links, edit the file in the data
 Once listed, people can run `winget install ShawnPlays.PCGameCoverArt`, and `winget upgrade --all` (or UniGetUI)
 keeps it updated.
 
-1. **First version, by hand.** After a release with an installer (1.4.0 or later):
+1. **First version, by hand.** After a release with an installer (2.0.0 or later):
    ```powershell
    winget install wingetcreate
-   ./scripts/winget-manifests.ps1 -Version 1.4.0      # writes obj\winget\1.4.0, hashing the released installer
-   winget validate --manifest obj\winget\1.4.0
-   wingetcreate submit --token <token> obj\winget\1.4.0
+   ./scripts/winget-manifests.ps1 -Version 2.0.0      # writes obj\winget\2.0.0, hashing the released installer
+   winget validate --manifest obj\winget\2.0.0
+   wingetcreate submit --token <token> obj\winget\2.0.0
    ```
    The token is a GitHub personal access token (classic) with the **public_repo** scope; create one at
    <https://github.com/settings/tokens>. `wingetcreate` forks `microsoft/winget-pkgs` under your account and opens a

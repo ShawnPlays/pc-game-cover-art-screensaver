@@ -109,6 +109,7 @@ public partial class SettingsWindow : Window
             UpdateKeywordBoxes();
             UpdateMosaicRows(working.MosaicColumns);
             UpdateFeaturedOptions();
+            ShowAutoUpdateState();
             if (working.CheckForUpdates)
             {
                 _ = CheckForUpdatesAsync(userAsked: false);
@@ -426,6 +427,24 @@ public partial class SettingsWindow : Window
     }
 
     private void OnCheckNowClick(object sender, RoutedEventArgs e) => _ = CheckForUpdatesAsync(userAsked: true);
+
+    /// <summary>Shows whether the daily update task exists. It's set up by the installer, so it's per PC, not in settings.json.</summary>
+    private void ShowAutoUpdateState()
+    {
+        var enabled = Updates.AutoUpdateService.IsEnabled();
+        AutoUpdateCheck.IsEnabled = enabled != null;
+        AutoUpdateCheck.IsChecked = enabled == true;
+        AutoUpdateNote.Text = enabled == null
+            ? "Windows didn't say whether automatic updates are on. Run the installer again to change it."
+            : "Changing this asks for administrator permission. The Playnite add-on updates through Playnite.";
+    }
+
+    private void OnAutoUpdateClick(object sender, RoutedEventArgs e)
+    {
+        var wanted = AutoUpdateCheck.IsChecked == true;
+        Updates.AutoUpdateService.SetEnabledAsAdministrator(wanted);
+        ShowAutoUpdateState(); // shows what actually happened, e.g. unchanged if they said no to the prompt
+    }
 
     /// <summary>Asks GitHub for the latest release and shows the banner if it's newer. Quietly gives up if offline.</summary>
     private async Task CheckForUpdatesAsync(bool userAsked)

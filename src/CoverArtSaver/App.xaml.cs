@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using CoverArtSaver.Core;
+using CoverArtSaver.Updates;
 using CoverArtSaver.Windows;
 
 namespace CoverArtSaver;
@@ -17,8 +18,26 @@ public partial class App : Application
         base.OnStartup(e);
         DispatcherUnhandledException += OnUnhandledException;
 
-        AppPaths.MigrateOldDataFolder(); // before anything reads settings or writes the log
         var args = ScreensaverArgs.Parse(e.Args);
+        if (args.Mode is SaverMode.Update or SaverMode.EnableAutoUpdate or SaverMode.DisableAutoUpdate)
+        {
+            // No window and no user settings: run by the scheduled task (as SYSTEM) or with administrator rights.
+            Log.FileOverride = AutoUpdateService.UpdateLogFile;
+            Log.Info($"Starting: mode={args.Mode} version={GetType().Assembly.GetName().Version}");
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            if (args.Mode == SaverMode.Update)
+            {
+                _ = RunUpdateThenExit();
+            }
+            else
+            {
+                Shutdown(AutoUpdateService.SetEnabled(args.Mode == SaverMode.EnableAutoUpdate));
+            }
+
+            return;
+        }
+
+        AppPaths.MigrateOldDataFolder(); // before anything reads settings or writes the log
         var settings = SettingsStore.Load();
         Log.Info($"Starting: mode={args.Mode} handle={args.WindowHandle} args='{string.Join(' ', e.Args)}'");
 
@@ -49,6 +68,8 @@ public partial class App : Application
                 break;
         }
     }
+
+    private async Task RunUpdateThenExit() => Shutdown(await AutoUpdateService.RunAsync());
 
     private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {

@@ -436,6 +436,9 @@
                     <TextBlock x:Name="VersionText" Foreground="#666" Margin="0,2,0,6" />
                     <CheckBox Content="Check for updates when this window opens" IsChecked="{Binding CheckForUpdates}"
                               ToolTip="Asks GitHub whether there's a newer version. Only this window does it; the screensaver itself never goes online." />
+                    <CheckBox x:Name="AutoUpdateCheck" Content="Install updates automatically (checks once a day)" Click="OnAutoUpdateClick"
+                              ToolTip="A Windows scheduled task checks GitHub once a day and installs a new version by itself, without asking. It skips a day if the screensaver is running. Changing this asks for administrator permission." />
+                    <TextBlock x:Name="AutoUpdateNote" Foreground="#666" FontSize="11" Margin="20,0,0,2" TextWrapping="Wrap" />
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,12">
                         <Button Content="Check now" Padding="10,2" Click="OnCheckNowClick" />
                         <TextBlock x:Name="UpdateStatus" Foreground="#666" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" />

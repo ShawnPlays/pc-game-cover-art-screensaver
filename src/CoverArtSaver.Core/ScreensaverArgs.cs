@@ -12,6 +12,12 @@ public enum SaverMode
     Fullscreen,
     /// <summary>/w — developer mode: runs in a normal resizable window that doesn't exit on mouse moves.</summary>
     Windowed,
+    /// <summary>/update — no window: install a newer version if there is one (run by the daily scheduled task).</summary>
+    Update,
+    /// <summary>/autoupdate on — register the daily update task (needs administrator rights).</summary>
+    EnableAutoUpdate,
+    /// <summary>/autoupdate off — remove the daily update task (needs administrator rights).</summary>
+    DisableAutoUpdate,
 }
 
 /// <summary>
@@ -20,6 +26,7 @@ public enum SaverMode
 ///   /p 1234       preview inside window handle 1234   (also seen as /p:1234)
 ///   /c:1234       show settings, owned by window 1234 (also /c 1234, or just /c)
 ///   (nothing)     show settings (e.g. double-clicking the .scr / choosing "Configure")
+/// plus this app's own: /w (windowed), /update and /autoupdate on|off (see <see cref="AutoUpdater"/>).
 /// Case and "-" vs "/" both vary in the wild, so parse loosely.
 /// </summary>
 public sealed record ScreensaverArgs(SaverMode Mode, nint WindowHandle)
@@ -35,6 +42,18 @@ public sealed record ScreensaverArgs(SaverMode Mode, nint WindowHandle)
         if (first.Length == 0)
         {
             return new(SaverMode.Configure, 0);
+        }
+
+        // This app's own options (Windows never sends these).
+        if (first == "update")
+        {
+            return new(SaverMode.Update, 0);
+        }
+
+        if (first == "autoupdate")
+        {
+            var on = args.Count > 1 && args[1].Trim().Equals("on", StringComparison.OrdinalIgnoreCase);
+            return new(on ? SaverMode.EnableAutoUpdate : SaverMode.DisableAutoUpdate, 0);
         }
 
         // The handle may be glued on with ':' (/c:1234) or be the next argument (/p 1234).

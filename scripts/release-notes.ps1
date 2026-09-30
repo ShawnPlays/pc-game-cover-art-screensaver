@@ -45,7 +45,7 @@ Prefer to do it by hand? ``PCGameCoverArt.scr`` and ``PCGameCoverArtExporter_$Ve
 
 ## Upgrading from an earlier version
 
-Run the new installer; your settings are kept. From 1.4.0 on, the screensaver's settings window also offers each new version with an **Update now** button. Playnite users: leave **Install or update the Playnite add-on** ticked at the end, then restart Playnite.
+Run the new installer; your settings are kept. From 2.0.0 on, new versions can also install themselves once a day (if **Install updates automatically** was ticked in the installer), and the settings window offers each one with an **Update now** button. Playnite users: leave **Install or update the Playnite add-on** ticked at the end, then restart Playnite.
 Notes for every version: **$repoUrl#upgrade-from-an-earlier-version**
 
 Full step-by-step directions, uninstalling and troubleshooting:
