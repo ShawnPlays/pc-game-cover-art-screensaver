@@ -16,6 +16,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
+if (-not [IO.Path]::IsPathRooted($OutFile)) { $OutFile = Join-Path (Get-Location) $OutFile }
 $repoUrl = if ($env:GITHUB_REPOSITORY) { "$($env:GITHUB_SERVER_URL)/$($env:GITHUB_REPOSITORY)" }
            else { 'https://github.com/ShawnPlays/pc-game-cover-art-screensaver' }
 

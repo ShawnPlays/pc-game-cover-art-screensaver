@@ -16,6 +16,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 if (-not $OutFile) { $OutFile = Join-Path $root 'obj\release-notes.md' }
+if (-not [IO.Path]::IsPathRooted($OutFile)) { $OutFile = Join-Path (Get-Location) $OutFile }   # e.g. just "release-notes.md"
 
 # Links in the README like (#music) point into the README; on the release page they must point at the repository.
 $repoUrl = if ($env:GITHUB_REPOSITORY) { "$($env:GITHUB_SERVER_URL)/$($env:GITHUB_REPOSITORY)" }
