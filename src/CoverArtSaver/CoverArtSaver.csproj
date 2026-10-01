@@ -11,7 +11,7 @@
     <AssemblyName>PCGameCoverArt</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>icon.ico</ApplicationIcon>
-    <Version>2.0.1</Version>
+    <Version>2.0.2</Version>
     <Product>PC Game Cover Art Screensaver</Product>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
@@ -37,6 +37,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CoverArtSaver.Core\CoverArtSaver.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Plays the music. WPF's MediaPlayer can only use Windows' default output; WASAPI can use any. -->
+    <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
   </ItemGroup>
 
 </Project>

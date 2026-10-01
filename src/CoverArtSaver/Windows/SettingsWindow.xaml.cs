@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using CoverArtSaver.Audio;
 using CoverArtSaver.Core;
 using CoverArtSaver.Core.Steam;
 using Microsoft.Win32;
@@ -79,6 +80,7 @@ public partial class SettingsWindow : Window
             [RatingLimit.VeryPositive] = "Very Positive or better",
             [RatingLimit.OverwhelminglyPositive] = "Overwhelmingly Positive only",
         };
+        ShowAudioOutputs();
         AdultKeywordsBox.Text = string.Join(Environment.NewLine, working.Filter.AdultKeywords);
         MatureKeywordsBox.Text = string.Join(Environment.NewLine, working.Filter.MatureKeywords);
 
@@ -276,6 +278,32 @@ public partial class SettingsWindow : Window
             box.Unchecked += (_, _) => chosen.RemoveAll(n => string.Equals(n, name, StringComparison.OrdinalIgnoreCase));
             SkipLibrariesPanel.Children.Add(box);
         }
+    }
+
+    /// <summary>Windows' default output, every device that's plugged in, and the chosen one even if it isn't.</summary>
+    private void ShowAudioOutputs()
+    {
+        var music = working.Music;
+        var outputs = AudioOutputs.List();
+        if (!string.IsNullOrEmpty(music.OutputDeviceId) && outputs.All(o => o.Id != music.OutputDeviceId))
+        {
+            outputs.Add(new AudioOutput(music.OutputDeviceId, $"{music.OutputDeviceName ?? "Chosen output"} (not connected)"));
+        }
+
+        outputs.Insert(0, new AudioOutput("", "Windows default output"));
+        OutputCombo.ItemsSource = outputs;
+        OutputCombo.SelectedValue = music.OutputDeviceId ?? "";
+    }
+
+    private void OnOutputChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (OutputCombo.SelectedItem is not AudioOutput chosen || chosen.Id == (working.Music.OutputDeviceId ?? ""))
+        {
+            return; // keeps the saved name of a device that isn't plugged in right now
+        }
+
+        working.Music.OutputDeviceId = chosen.Id == "" ? null : chosen.Id;
+        working.Music.OutputDeviceName = chosen.Id == "" ? null : chosen.Name;
     }
 
     /// <summary>Lists the installed soundtracks in the background, again only if the Steam folder changes.</summary>

@@ -119,6 +119,11 @@ public sealed class SaverSettings
         MosaicFeatured.Sanitize();
         Music ??= new MusicSettings();
         Music.Volume = Math.Clamp(Music.Volume, 0, 100);
+        if (string.IsNullOrWhiteSpace(Music.OutputDeviceId))
+        {
+            Music.OutputDeviceId = null;
+            Music.OutputDeviceName = null;
+        }
         Filter ??= new FilterSettings();
         Filter.AdultKeywords ??= [];
         Filter.MatureKeywords ??= [];
@@ -148,6 +153,12 @@ public sealed class MusicSettings
 
     /// <summary>0–100.</summary>
     public int Volume { get; set; } = 40;
+
+    /// <summary>Windows' ID for the speakers or headphones to play through. Empty: whatever Windows' default output is.</summary>
+    public string? OutputDeviceId { get; set; }
+
+    /// <summary>That device's name when it was chosen, so the settings can still show it while it's unplugged.</summary>
+    public string? OutputDeviceName { get; set; }
 }
 
 public sealed class FilterSettings

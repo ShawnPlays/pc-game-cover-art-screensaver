@@ -166,6 +166,13 @@ To upgrade by hand instead:
 
 </details>
 
+#### Notes for version 2.0.2
+
+- **Choose where the music plays:** a new **Play through** option on the Music tab sends the soundtracks to the
+  speakers or headphones you pick, instead of always using Windows' default output. If that device isn't plugged in
+  when the screensaver starts, the music plays through the default output. See [Music](#music).
+- Nothing changed in the Playnite add-on apart from its version number, so updating it is optional.
+
 #### Notes for version 2.0.1
 
 - Fixes **automatic updates**, which didn't run in 2.0.0: Windows' Task Scheduler couldn't start the screensaver's
@@ -278,6 +285,7 @@ it on.
 | **Shuffle** (on by default) | Plays every track once in a random order, then reshuffles. The same track never plays twice in a row. |
 | **Start at a random track** | With shuffle off, the music plays album by album in track order. This starts it somewhere random instead of at the first track, then carries on in order. It's greyed out while Shuffle is on, because shuffle already starts on a random track. |
 | **Volume** | 0–100%. The music fades in over the first few seconds. |
+| **Play through** | The speakers or headphones the music plays through. **Windows default output** (the default) follows whatever Windows is set to, even if you change it while the music plays. If the device you choose isn't plugged in when the screensaver starts, the music plays through the default output instead. |
 
 ### Good to know
 

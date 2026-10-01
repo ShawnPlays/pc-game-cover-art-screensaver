@@ -155,5 +155,18 @@ public class SoundtrackPlaylistTests
         Assert.True(copy.Music.Enabled);
         Assert.False(copy.Music.Shuffle);
         Assert.True(copy.Music.StartAtRandomTrack);
+        Assert.Null(copy.Music.OutputDeviceId); // Windows' default output
+    }
+
+    [Fact]
+    public void ChosenOutputSurvivesARoundTripAndBlankMeansTheDefault()
+    {
+        var chosen = new SaverSettings { Music = { OutputDeviceId = "{0.0.0.00000000}.{abc}", OutputDeviceName = "Headphones" } }.Sanitize().Clone();
+        Assert.Equal("{0.0.0.00000000}.{abc}", chosen.Music.OutputDeviceId);
+        Assert.Equal("Headphones", chosen.Music.OutputDeviceName);
+
+        var blank = new SaverSettings { Music = { OutputDeviceId = " ", OutputDeviceName = "Headphones" } }.Sanitize();
+        Assert.Null(blank.Music.OutputDeviceId);
+        Assert.Null(blank.Music.OutputDeviceName);
     }
 }

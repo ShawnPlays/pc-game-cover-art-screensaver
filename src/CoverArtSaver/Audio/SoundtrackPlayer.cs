@@ -1,22 +1,31 @@
-using System.Windows.Media;
 using System.Windows.Threading;
 using CoverArtSaver.Core;
 using CoverArtSaver.Core.Steam;
+using NAudio.CoreAudioApi;
+using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace CoverArtSaver.Audio;
 
 /// <summary>
 /// Plays installed Steam soundtracks while the screensaver runs, fading in at the start. One per session, not one
-/// per monitor. Uses WPF's MediaPlayer, which plays whatever Windows itself can (MP3, FLAC, M4A, WMA, WAV).
+/// per monitor. Decodes with Media Foundation, so it plays whatever Windows itself can (MP3, FLAC, M4A, WMA, WAV),
+/// and plays through WASAPI so the music can go to a chosen output instead of Windows' default.
 /// </summary>
 internal sealed class SoundtrackPlayer
 {
     private static readonly TimeSpan FadeIn = TimeSpan.FromSeconds(3);
 
-    private readonly MediaPlayer player = new();
     private readonly MusicSettings settings;
+    private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
     private readonly DispatcherTimer fadeTimer = new() { Interval = TimeSpan.FromMilliseconds(50) };
     private SoundtrackPlaylist? playlist;
+    private MMDevice? device;
+    private bool deviceChecked;
+    private WasapiPlayer? output;
+    private MediaFoundationReader? reader;
+    private VolumeSampleProvider? volume;
+    private double currentVolume;
     private DateTime fadeStart;
     private int failuresInARow;
     private bool stopped;
@@ -24,22 +33,10 @@ internal sealed class SoundtrackPlayer
     private SoundtrackPlayer(MusicSettings settings)
     {
         this.settings = settings;
-        player.Volume = 0;
-        player.MediaEnded += (_, _) => PlayNext();
-        player.MediaOpened += (_, _) => failuresInARow = 0;
-        player.MediaFailed += (_, e) =>
-        {
-            Log.Error($"Couldn't play {player.Source?.LocalPath}", e.ErrorException);
-            // Skip unplayable files, but give up if nothing plays at all rather than spinning forever.
-            if (++failuresInARow < Math.Min(playlist!.Count, 10))
-            {
-                PlayNext();
-            }
-        };
         fadeTimer.Tick += (_, _) =>
         {
             var progress = Math.Min(1, (DateTime.UtcNow - fadeStart) / FadeIn);
-            player.Volume = TargetVolume * progress;
+            SetVolume(TargetVolume * progress);
             if (progress >= 1)
             {
                 fadeTimer.Stop();
@@ -48,6 +45,8 @@ internal sealed class SoundtrackPlayer
     }
 
     private double TargetVolume => settings.Volume / 100.0;
+
+    private int MaxFailures => Math.Min(playlist!.Count, 10);
 
     /// <summary>Starts the music if it's switched on; returns null otherwise. Call on the UI thread.</summary>
     public static SoundtrackPlayer? Start(SaverSettings settings)
@@ -66,8 +65,9 @@ internal sealed class SoundtrackPlayer
     {
         stopped = true;
         fadeTimer.Stop();
-        player.Stop();
-        player.Close();
+        CloseTrack();
+        device?.Dispose();
+        device = null;
     }
 
     private async void Begin(SaverSettings settings)
@@ -81,19 +81,134 @@ internal sealed class SoundtrackPlayer
         }
 
         playlist = new SoundtrackPlaylist(scan.Tracks, settings.Music.Shuffle, settings.Music.StartAtRandomTrack, Environment.TickCount);
-        PlayNext();
         fadeStart = DateTime.UtcNow;
         fadeTimer.Start();
+        PlayNext();
     }
 
-    private void PlayNext()
+    private void SetVolume(double value)
     {
-        if (stopped || playlist?.Next() is not { } track)
+        currentVolume = value;
+        if (volume != null)
+        {
+            volume.Volume = (float)value;
+        }
+    }
+
+    private async void PlayNext()
+    {
+        while (!stopped && playlist?.Next() is { } track)
+        {
+            if (await TryPlay(track.Path))
+            {
+                return;
+            }
+
+            // Skip unplayable files, but give up if nothing plays at all rather than spinning forever.
+            if (++failuresInARow >= MaxFailures)
+            {
+                Log.Info("Music: nothing would play, so the music is off for this session.");
+                return;
+            }
+        }
+    }
+
+    private async Task<bool> TryPlay(string path)
+    {
+        CloseTrack();
+        MediaFoundationReader? newReader = null;
+        WasapiPlayer? newOutput = null;
+        try
+        {
+            // Looked up again after a playback error, in case the chosen device was unplugged.
+            if (!deviceChecked)
+            {
+                device = AudioOutputs.OpenChosen(settings.OutputDeviceId);
+                deviceChecked = true;
+            }
+
+            newReader = new MediaFoundationReader(path);
+            var newVolume = new VolumeSampleProvider(newReader.ToSampleProvider()) { Volume = (float)currentVolume };
+            var builder = new WasapiPlayerBuilder().WithCategory(AudioStreamCategory.Media);
+            // No device chosen (or it's unplugged): follow Windows' default output, even if that changes mid-track.
+            newOutput = device != null ? builder.WithDevice(device).Build() : await builder.WithDefaultDeviceStreamRouting().BuildAsync();
+            newOutput.PlaybackStopped += OnPlaybackStopped;
+            newOutput.Init(new SampleToWaveProvider(newVolume));
+            if (stopped)
+            {
+                throw new OperationCanceledException();
+            }
+
+            newOutput.Play();
+            reader = newReader;
+            volume = newVolume;
+            output = newOutput;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (ex is not OperationCanceledException)
+            {
+                Log.Error($"Couldn't play {path}", ex);
+            }
+
+            if (newOutput != null)
+            {
+                newOutput.PlaybackStopped -= OnPlaybackStopped;
+                newOutput.Dispose();
+            }
+
+            newReader?.Dispose();
+            return false;
+        }
+    }
+
+    /// <summary>Raised when a track ends or fails, possibly on the audio thread.</summary>
+    private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
+    {
+        if (!dispatcher.CheckAccess())
+        {
+            dispatcher.BeginInvoke(() => OnPlaybackStopped(sender, e));
+            return;
+        }
+
+        if (stopped || sender != output)
         {
             return;
         }
 
-        player.Open(new Uri(track.Path));
-        player.Play();
+        if (e.Exception == null)
+        {
+            failuresInARow = 0;
+        }
+        else
+        {
+            Log.Error("Music playback stopped", e.Exception);
+            device?.Dispose();
+            device = null;
+            deviceChecked = false;
+            if (++failuresInARow >= MaxFailures)
+            {
+                Log.Info("Music: nothing would play, so the music is off for this session.");
+                return;
+            }
+        }
+
+        PlayNext();
+    }
+
+    private void CloseTrack()
+    {
+        if (output != null)
+        {
+            output.PlaybackStopped -= OnPlaybackStopped;
+            output.Stop();
+            output.Dispose();
+            output = null;
+        }
+
+        reader?.Dispose();
+        reader = null;
+        volume = null;
     }
 }

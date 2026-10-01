@@ -414,6 +414,13 @@
                                                 Value="{Binding Volume}" />
                                         <TextBlock Grid.Column="2" Style="{StaticResource Value}" Text="{Binding Volume, StringFormat={}{0}%}" />
                                     </Grid>
+
+                                    <DockPanel Margin="0,6,0,0">
+                                        <TextBlock Style="{StaticResource Label}" Text="Play through" />
+                                        <ComboBox x:Name="OutputCombo" SelectedValuePath="Id" DisplayMemberPath="Name"
+                                                  SelectionChanged="OnOutputChanged"
+                                                  ToolTip="The speakers or headphones the music plays through. If the one you choose isn't plugged in when the screensaver starts, the music plays through Windows' default output instead." />
+                                    </DockPanel>
                                 </StackPanel>
 
                                 <TextBlock x:Name="MusicStatus" TextWrapping="Wrap" Margin="0,8,0,4" />
