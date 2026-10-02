@@ -39,6 +39,17 @@ public enum MultiMonitorMode
     PrimaryOnly,
 }
 
+/// <summary>What clicking a cover while the screensaver runs does.</summary>
+public enum GameClickAction
+{
+    /// <summary>Clicks, keys and mouse movement all just close the screensaver.</summary>
+    Off,
+    /// <summary>Moving the mouse shows the pointer; clicking a cover opens that game's page in Playnite or Steam.</summary>
+    Show,
+    /// <summary>Moving the mouse shows the pointer; clicking a cover starts that game (or installs it, if it isn't installed).</summary>
+    Play,
+}
+
 /// <summary>What the content filter does with the games one of its word lists matches.</summary>
 public enum ContentFilterMode
 {
@@ -89,6 +100,12 @@ public sealed class SaverSettings
     /// <summary>How far (in pixels) the mouse must move before the screensaver exits.</summary>
     public int MouseMoveThreshold { get; set; } = 12;
 
+    /// <summary>
+    /// Off: moving the mouse exits. Otherwise moving it shows the pointer instead, and clicking a cover opens or
+    /// starts that game; clicking anywhere else, or pressing a key, still exits.
+    /// </summary>
+    public GameClickAction ClickAction { get; set; } = GameClickAction.Off;
+
     // ---- Library ----
     public LibrarySource Source { get; set; } = LibrarySource.Playnite;
 
@@ -115,6 +132,10 @@ public sealed class SaverSettings
         MosaicColumns = Math.Clamp(MosaicColumns, 2, 30);
         MosaicFlipSeconds = Math.Clamp(MosaicFlipSeconds, 0.2, 60);
         MouseMoveThreshold = Math.Clamp(MouseMoveThreshold, 0, 500);
+        if (!Enum.IsDefined(ClickAction))
+        {
+            ClickAction = GameClickAction.Off;
+        }
         MosaicFeatured ??= new FeaturedTileSettings();
         MosaicFeatured.Sanitize();
         Music ??= new MusicSettings();

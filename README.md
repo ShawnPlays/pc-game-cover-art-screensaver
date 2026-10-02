@@ -27,6 +27,9 @@ New in 1.3.0: it can also play the game soundtracks you've installed through Ste
   Steam's own files, with nothing extra to install). No account login or API keys, and no internet connection needed
 - **Easy to install and update:** one installer sets up the screensaver and, for Playnite, the add-on. New versions
   install themselves once a day (optional), or with one click from the settings window
+- **Click a cover to play** (optional): see a game you fancy? Move the mouse and the pointer appears instead of the
+  screensaver closing; click the cover to open that game in Playnite or Steam, or to start it straight away. Turn it on
+  under **Settings… → Display → Screens and input → Clicking a cover**
 - Standard screensaver behavior: full screen on every monitor, live preview in Windows' Screen Saver Settings, and a settings dialog
 - **Optional content filter** hides games with nudity or sexual content, based on their tags, genres, features, categories and age ratings (for Steam: its store tags and content descriptors). You can edit the word list.
 - Optional stricter filter for anything rated Mature/18+
@@ -166,6 +169,17 @@ To upgrade by hand instead:
 
 </details>
 
+#### Notes for version 2.1.0
+
+When I showed my daughter the screensaver, she watched the covers go by for a moment and said, "That's cool. If you
+click on a game, does it play it?" I had to tell her no. Today I get to tell her yes.
+
+- **Click a cover to play:** a new **Clicking a cover** option under **Settings… → Display → Screens and input**. Set
+  it to **Show the game in Playnite or Steam** or **Play the game**, and moving the mouse shows the pointer instead of
+  closing the screensaver. Click a cover to open or start that game; click anywhere else or press a key to close as
+  usual. It's off by default, so nothing changes unless you turn it on.
+- Nothing changed in the Playnite add-on apart from its version number, so updating it is optional.
+
 #### Notes for version 2.0.2
 
 - **Choose where the music plays:** a new **Play through** option on the Music tab sends the soundtracks to the
@@ -254,6 +268,8 @@ To upgrade by hand instead:
 | The wrong Steam account's games appear | The screensaver uses the account that signed in to Steam most recently. Sign in to Steam with the account you want once. |
 | A game you've played a lot keeps getting a large tile | Playnite only knows the play time for games from stores that report it, or games you start from Playnite. Under **Settings… → Display → Mosaic → Leave out**, tick the game's library, or **Games added to Playnite by hand**. |
 | Mosaic shows no large tiles | Under **Settings… → Display → Mosaic**, the line below the large tile options says how many games qualify. If it's 0, choose **Any game, at random**, untick some **Leave out** options, or raise **Played for at most** or lower **Review rating**. Playnite users: update the add-on (see [Upgrade](#upgrade-from-an-earlier-version)) and use **Export library for screensaver now**. Playnite games also need a Community or Critic Score, which comes from downloading metadata. |
+| Clicking a cover just closes the screensaver | Turn on **Settings… → Display → Screens and input → Clicking a cover**. Move the mouse first so the pointer shows: a click while it's hidden only closes the screensaver. |
+| Clicking a cover closes the screensaver but nothing opens | Playnite games open through Playnite and Steam games through Steam, so that launcher has to be installed. If you ticked **On resume, display logon screen**, sign in first: the game or launcher opens behind the sign-in screen. |
 | No music plays | Open **Settings… → Music**. The line under the options says how many soundtracks were found. Soundtracks have to be installed in Steam: in your Steam library, pick **Soundtracks** in the filter, then install the ones you want. Music doesn't play in the small preview in Screen Saver Settings, only in full screen. |
 | Windows says the file is in use when you replace `PCGameCoverArt.scr` by hand | Close Screen Saver Settings (its preview is running the old version) and try again. The installer avoids this by closing it for you. |
 | Automatic updates don't seem to happen | Look in `C:\Program Files\PC Game Cover Art\update.log`: each daily run says what it did. It skips a day while the screensaver or its settings are open, and needs an internet connection. On the **About** tab, check **Install updates automatically** is ticked. |

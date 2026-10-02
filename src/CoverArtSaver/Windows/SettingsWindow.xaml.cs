@@ -52,6 +52,12 @@ public partial class SettingsWindow : Window
         LayoutCombo.ItemsSource = Enum.GetValues<SaverLayout>();
         OrderCombo.ItemsSource = Enum.GetValues<CoverOrder>();
         MonitorCombo.ItemsSource = Enum.GetValues<MultiMonitorMode>();
+        ClickCombo.ItemsSource = new Dictionary<GameClickAction, string>
+        {
+            [GameClickAction.Off] = "Nothing: just close the screensaver",
+            [GameClickAction.Show] = "Show the game in Playnite or Steam",
+            [GameClickAction.Play] = "Play the game",
+        };
         ShapeCombo.ItemsSource = new Dictionary<CoverShape, string>
         {
             [CoverShape.All] = "Use all cover art",
@@ -109,6 +115,7 @@ public partial class SettingsWindow : Window
             UpdateSourcePanels();
             UpdateLayoutSections();
             UpdateKeywordBoxes();
+            UpdateClickHint();
             UpdateMosaicRows(working.MosaicColumns);
             UpdateFeaturedOptions();
             ShowAutoUpdateState();
@@ -148,6 +155,23 @@ public partial class SettingsWindow : Window
 
     private void OnMonitorModeChanged(object sender, SelectionChangedEventArgs e) =>
         TakeTurnsCheck.IsEnabled = MonitorCombo.SelectedItem is MultiMonitorMode.Independent;
+
+    private void OnClickActionChanged(object sender, SelectionChangedEventArgs e) => UpdateClickHint();
+
+    /// <summary>Explains what moving the mouse and clicking will do, and renames the movement slider to match.</summary>
+    private void UpdateClickHint()
+    {
+        var action = ClickCombo.SelectedValue as GameClickAction? ?? GameClickAction.Off;
+        var launcher = SourceCombo.SelectedValue is LibrarySource.Steam ? "Steam" : "Playnite";
+        MouseThresholdLabel.Text = action == GameClickAction.Off ? "Mouse movement to exit" : "Mouse movement to show pointer";
+        ClickHint.Text = action switch
+        {
+            GameClickAction.Show => $"Moving the mouse shows the pointer instead of closing. Click a cover to open that game in {launcher}; click anywhere else or press a key to close.",
+            GameClickAction.Play => $"Moving the mouse shows the pointer instead of closing. Click a cover to start that game through {launcher} (a game that isn't installed starts installing); click anywhere else or press a key to close.",
+            _ => "",
+        };
+        ClickHint.Visibility = action == GameClickAction.Off ? Visibility.Collapsed : Visibility.Visible;
+    }
 
     /// <summary>Only show the options that apply to the chosen style.</summary>
     private void UpdateLayoutSections()
@@ -398,6 +422,7 @@ public partial class SettingsWindow : Window
     private void OnSourceChanged(object sender, SelectionChangedEventArgs e)
     {
         UpdateSourcePanels();
+        UpdateClickHint();
         ScheduleSummary(sender, e);
         UpdateMosaicRows(working.MosaicColumns); // Steam's landscape covers are wider than Playnite's
     }

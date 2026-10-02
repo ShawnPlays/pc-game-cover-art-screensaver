@@ -12,7 +12,7 @@ namespace CoverArtSaver.Rendering;
 /// show another game, like iTunes' old Album Artwork screensaver. <see cref="MosaicPlanner"/> decides
 /// which tile flips to which game (and where large tiles move to); this class draws it.
 /// </summary>
-internal sealed class MosaicView : Grid
+internal sealed class MosaicView : Grid, IGamePicker
 {
     private const double FlipSeconds = 0.8;
 
@@ -140,6 +140,22 @@ internal sealed class MosaicView : Grid
 
         // Counting flips from time zero (not from now) keeps mirrored monitors in lockstep even if one lays out a bit later.
         stepsSeen = 0;
+    }
+
+    public GameEntry? GameAt(Point point)
+    {
+        // Tiles that are turning away were already dropped from the list, and a tile mid-flip reports its new game.
+        foreach (var tile in tiles.Values)
+        {
+            var element = tile.Element;
+            var bounds = new Rect(Canvas.GetLeft(element), Canvas.GetTop(element), element.Width, element.Height);
+            if (bounds.Contains(point))
+            {
+                return tile.Game;
+            }
+        }
+
+        return null;
     }
 
     private CoverTextureCache TexturesFor(MosaicPiece piece) => piece.IsLarge ? largeTextures! : textures!;

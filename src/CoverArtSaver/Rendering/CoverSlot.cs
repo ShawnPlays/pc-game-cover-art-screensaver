@@ -20,10 +20,17 @@ internal sealed class CoverSlot
     private Brush frontBrush = Placeholder;
     private Brush? reflectionBrush;
     private double lastOpacity = -1;
+    private double opacity;
 
     public GameEntry Game { get; }
 
     public ModelVisual3D Visual { get; }
+
+    /// <summary>How visible the cover is right now; the outermost covers fade out.</summary>
+    public double Opacity => opacity;
+
+    /// <summary>Whether a hit test result is this cover (not its reflection).</summary>
+    public bool IsFront(Model3D model) => model == front;
 
     public CoverSlot(GameEntry game, bool showReflection)
     {
@@ -73,6 +80,7 @@ internal sealed class CoverSlot
         rotation.Angle = pose.AngleDegrees;
         translation.OffsetX = pose.X;
         translation.OffsetZ = pose.Z;
+        opacity = pose.Opacity;
 
         // Only touch opacity when it changes; the shared placeholder brush is frozen.
         if (Math.Abs(pose.Opacity - lastOpacity) > 0.001 && !frontBrush.IsFrozen)

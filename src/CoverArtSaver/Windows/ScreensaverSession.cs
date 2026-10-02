@@ -27,6 +27,7 @@ internal static class ScreensaverSession
             : NativeMethods.GetMonitors();
 
         var windows = new List<ScreensaverWindow>();
+        var wake = settings.ClickAction != GameClickAction.Off ? new PointerWake() : null;
         SoundtrackPlayer? music = null;
         var exiting = false;
         void ExitAll()
@@ -37,6 +38,7 @@ internal static class ScreensaverSession
             }
 
             exiting = true;
+            wake?.Stop();
             music?.Stop();
             foreach (var w in windows.Where(w => !w.IsClosed))
             {
@@ -50,8 +52,13 @@ internal static class ScreensaverSession
         {
             var monitor = monitors[i];
             var content = BuildContent(settings, library, monitor.IsPrimary, i, monitors.Count, seed, clock, isPreview: false);
-            var window = new ScreensaverWindow(content, monitor.Bounds, windowed, settings.MouseMoveThreshold);
+            var window = new ScreensaverWindow(content, monitor.Bounds, windowed, settings.MouseMoveThreshold, wake);
             window.ExitRequested += ExitAll;
+            window.GameChosen += game =>
+            {
+                ExitAll(); // get out of the way first, so the game or launcher comes up in front
+                OpenGame(game, settings.ClickAction);
+            };
             windows.Add(window);
         }
 
@@ -62,6 +69,27 @@ internal static class ScreensaverSession
 
         windows[0].Activate(); // make sure keyboard input reaches us
         music = SoundtrackPlayer.Start(settings); // not in the small preview, which doesn't come through here
+    }
+
+    private static void OpenGame(GameEntry game, GameClickAction action)
+    {
+        var link = GameLinks.For(game, action);
+        if (link == null)
+        {
+            Log.Info($"No {action} link for '{game.Name}' ({game.Id}).");
+            return;
+        }
+
+        try
+        {
+            Log.Info($"Opening '{game.Name}': {link}");
+            Process.Start(new ProcessStartInfo(link) { UseShellExecute = true })?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            // Usually Playnite or Steam isn't installed, so nothing handles the link.
+            Log.Error($"Could not open {link}", ex);
+        }
     }
 
     internal static UIElement BuildContent(

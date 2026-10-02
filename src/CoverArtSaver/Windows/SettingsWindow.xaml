@@ -33,7 +33,7 @@
     <DockPanel Margin="12">
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="Test full screen" Padding="12,4" Margin="0,0,24,0" Click="OnTestClick"
-                    ToolTip="Runs the screensaver with the settings above. Move the mouse or press a key to come back." />
+                    ToolTip="Runs the screensaver with the settings above. Press a key or click to come back." />
             <Button Content="OK" Width="88" Padding="0,4" Margin="0,0,8,0" IsDefault="True" Click="OnOkClick" />
             <Button Content="Cancel" Width="88" Padding="0,4" IsCancel="True" />
         </StackPanel>
@@ -247,7 +247,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition /><RowDefinition /><RowDefinition />
+                                    <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
                                 </Grid.RowDefinitions>
                                 <TextBlock Style="{StaticResource Label}" Text="Multiple monitors" />
                                 <ComboBox Grid.Column="1" x:Name="MonitorCombo" SelectedItem="{Binding MultiMonitor}" Margin="0,4"
@@ -257,10 +257,15 @@
                                           Content="Monitors take turns (one change at a time)"
                                           ToolTip="Instead of every monitor changing at the same moment, the change moves from monitor to monitor. Only for Independent monitors: mirrored ones always change together." />
 
-                                <TextBlock Grid.Row="2" Style="{StaticResource Label}" Text="Mouse movement to exit" />
-                                <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="100" TickFrequency="2" IsSnapToTickEnabled="True"
+                                <TextBlock Grid.Row="2" Style="{StaticResource Label}" Text="Clicking a cover" />
+                                <ComboBox Grid.Row="2" Grid.Column="1" x:Name="ClickCombo" SelectedValue="{Binding ClickAction}" Margin="0,4"
+                                          SelectedValuePath="Key" DisplayMemberPath="Value" SelectionChanged="OnClickActionChanged" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="ClickHint" TextWrapping="Wrap" Foreground="#666" Margin="0,0,0,4" />
+
+                                <TextBlock Grid.Row="4" x:Name="MouseThresholdLabel" Style="{StaticResource Label}" Text="Mouse movement to exit" />
+                                <Slider Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="100" TickFrequency="2" IsSnapToTickEnabled="True"
                                         Value="{Binding MouseMoveThreshold}" />
-                                <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Value}" Text="{Binding MouseMoveThreshold, StringFormat={}{0} px}" />
+                                <TextBlock Grid.Row="4" Grid.Column="2" Style="{StaticResource Value}" Text="{Binding MouseMoveThreshold, StringFormat={}{0} px}" />
                             </Grid>
                         </GroupBox>
 

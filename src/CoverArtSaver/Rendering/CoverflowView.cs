@@ -14,7 +14,7 @@ namespace CoverArtSaver.Rendering;
 /// plus a second quad underneath for its reflection. Every frame we ask <see cref="CoverflowMath"/>
 /// where each cover should be and update its transform.
 /// </summary>
-internal sealed class CoverflowView : Grid
+internal sealed class CoverflowView : Grid, IGamePicker
 {
     private readonly IReadOnlyList<GameEntry> games;
     private readonly SaverSettings settings;
@@ -24,7 +24,7 @@ internal sealed class CoverflowView : Grid
     private readonly double timeOffset;
     private readonly CoverTextureCache textures;
 
-    private readonly Viewport3D viewport = new() { ClipToBounds = true, IsHitTestVisible = false };
+    private readonly Viewport3D viewport = new() { ClipToBounds = true };
     private readonly ModelVisual3D lights = new() { Content = new AmbientLight(Colors.White) };
     private readonly Dictionary<long, CoverSlot> slots = [];
     private readonly TextBlock title = new();
@@ -46,6 +46,9 @@ internal sealed class CoverflowView : Grid
 
         Background = Brushes.Black;
         ClipToBounds = true;
+
+        // 3D hit testing is only needed when covers can be clicked; skip it otherwise.
+        viewport.IsHitTestVisible = !isPreview && settings.ClickAction != GameClickAction.Off;
 
         math = new CoverflowMath
         {
@@ -230,6 +233,30 @@ internal sealed class CoverflowView : Grid
         }
 
         textures.Trim(keep, capacity: Math.Max(48, keep.Count * 2));
+    }
+
+    public GameEntry? GameAt(Point point)
+    {
+        if (!viewport.IsHitTestVisible)
+        {
+            return null;
+        }
+
+        // 3D hits come nearest first, so the first cover hit is the one on top.
+        GameEntry? game = null;
+        VisualTreeHelper.HitTest(viewport, null, result =>
+        {
+            if (result is RayMeshGeometry3DHitTestResult mesh
+                && slots.Values.FirstOrDefault(s => s.IsFront(mesh.ModelHit)) is { } slot
+                && slot.Opacity > 0.3) // not the faded-out covers at the edges
+            {
+                game = slot.Game;
+                return HitTestResultBehavior.Stop;
+            }
+
+            return HitTestResultBehavior.Continue;
+        }, new PointHitTestParameters(TranslatePoint(point, viewport)));
+        return game;
     }
 
     private static string DescribeGame(GameEntry game)
