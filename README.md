@@ -8,7 +8,14 @@ A Windows 10/11 screensaver that shows the cover art from your [Playnite](https:
 - **Coverflow:** covers slide past in 3D, with angled side covers and reflections.
 - **Mosaic:** a wall of covers that flip over one at a time, like the iTunes Album Artwork screensaver.
 
-New in 1.3.0: it can also play the game soundtracks you've installed through Steam while it runs. See [Music](#music).
+**What's new**
+
+- **2.1.0: click a cover to play.** Spot a game you want to play? Move the mouse, click its cover, and the screensaver
+  opens it in Playnite or Steam, or starts it straight away. It's optional: turn it on under **Settings… → Display →
+  Screens and input → Clicking a cover**.
+- **2.0.0: an installer with automatic updates.** One download sets up the screensaver and, for Playnite, the add-on.
+  New versions can install themselves once a day, or with one click from the settings window. See [Install](#install).
+- **1.3.0: music.** It can play the game soundtracks you've installed through Steam while it runs. See [Music](#music).
 
 **[Download and install](#install)**
 
