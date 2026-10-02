@@ -27,6 +27,10 @@ A Windows 10/11 screensaver that shows the cover art from your [Playnite](https:
 
 ![Mosaic: a wall of game covers, with a few large tiles among the small ones](docs/screenshot-mosaic.jpg)
 
+A large tile turning over, on its way to a new spot on the wall
+
+![Mosaic mid-flip: a large cover squeezed to half its width and darkening as it turns, among the other covers](docs/screenshot-mosaic-flip.jpg)
+
 ## Features
 
 - Smooth 3D coverflow with reflections, rendered with WPF
