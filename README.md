@@ -19,7 +19,13 @@ A Windows 10/11 screensaver that shows the cover art from your [Playnite](https:
 
 **[Download and install](#install)**
 
-<!-- Add a screenshot or GIF here once you have one: ![screenshot](docs/screenshot.png) -->
+**Coverflow**
+
+![Coverflow: game covers slide past in 3D, with the centre cover facing you, its title and platform below, and reflections underneath](docs/screenshot-coverflow.jpg)
+
+**Mosaic**, with large tiles
+
+![Mosaic: a wall of game covers, with a few large tiles among the small ones](docs/screenshot-mosaic.jpg)
 
 ## Features
 
