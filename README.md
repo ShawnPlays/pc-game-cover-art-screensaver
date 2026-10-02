@@ -186,6 +186,13 @@ To upgrade by hand instead:
 
 </details>
 
+#### Notes for version 2.1.1
+
+- **Large tiles are now on by default** in the Mosaic style, for new installs: one 3×3 tile for a game you haven't
+  played yet that's rated Very Positive or better. If you already use the screensaver, your current choice is kept;
+  turn them on or off under **Settings… → Display → Mosaic**.
+- Nothing changed in the Playnite add-on apart from its version number, so updating it is optional.
+
 #### Notes for version 2.1.0
 
 When I showed my daughter the screensaver, she watched the covers go by for a moment and said, "That's cool. If you
