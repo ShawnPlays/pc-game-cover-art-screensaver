@@ -24,7 +24,7 @@ public enum FeaturedTileMode
 /// <summary>Mosaic option: some games are shown as large tiles spanning several cells.</summary>
 public sealed class FeaturedTileSettings
 {
-    public bool Enabled { get; set; }
+    public bool Enabled { get; set; } = true;
 
     public FeaturedTileMode Mode { get; set; } = FeaturedTileMode.BarelyPlayed;
 

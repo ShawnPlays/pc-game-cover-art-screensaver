@@ -147,6 +147,16 @@ public class FeaturedGamesTests
     }
 
     [Fact]
+    public void LargeTilesAreOnByDefaultButASavedChoiceIsKept()
+    {
+        Assert.True(new SaverSettings().MosaicFeatured.Enabled);
+
+        var off = System.Text.Json.JsonSerializer.Deserialize<SaverSettings>(
+            """{ "MosaicFeatured": { "Enabled": false } }""")!.Sanitize();
+        Assert.False(off.MosaicFeatured.Enabled);
+    }
+
+    [Fact]
     public void OlderSettingsFilesKeepBarelyPlayed()
     {
         var settings = System.Text.Json.JsonSerializer.Deserialize<SaverSettings>(

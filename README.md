@@ -35,7 +35,7 @@ A large tile turning over, on its way to a new spot on the wall
 
 - Smooth 3D coverflow with reflections, rendered with WPF
 - **Mosaic style**, like iTunes' Album Artwork screensaver: a wall of covers that flip over one at a time. You choose how many covers go across; the number of rows follows your screen's shape
-- **Large tiles** (mosaic, optional): some games get large tiles, 2×2 up to 6×6, that move around the wall as they flip. You choose how many (1–4) and which games get them:
+- **Large tiles** (mosaic, on by default): some games get large tiles, 2×2 up to 6×6, that move around the wall as they flip. You choose how many (1–4) and which games get them:
   - **Games you've barely played** (a backlog spotlight): you set the most hours played that still counts (0 = never played) and a minimum review rating in Steam's terms (Mixed up to Overwhelmingly Positive). For Playnite that's the Community Score, or the Critic Score if there's none. For Playnite you can also leave out games added by hand and games from stores that can't report play time, whose "0 hours" often isn't true. By default that's every store except Steam, Epic, GOG, Xbox, PlayStation and EA app, which are the ones that report play time to Playnite
   - **Any game, at random**: just for variety; every game can come up large or small
 - **[Music](#music)** (optional): plays the soundtracks you've installed through Steam while the screensaver runs, with
@@ -108,8 +108,8 @@ The installer adds *PC Game Cover Art Screensaver* to Windows' **Installed apps*
 1. The settings open at the end of the installer. Later, open them from Screen Saver Settings: press **Start**, type
    **screen saver**, choose **Change screen saver**, make sure **PCGameCoverArt** is selected, and click **Settings…**.
 2. On the **Library & filters** tab, set **Get games from** to **Playnite** or **Steam**. Then pick the style
-   (Coverflow or Mosaic), filters and other options, and click **OK**. With Mosaic, you can also turn on large tiles
-   on the **Display** tab, for games you've barely played or for any game at random. To hear your Steam soundtracks
+   (Coverflow or Mosaic), filters and other options, and click **OK**. With Mosaic, some games get large tiles; change
+   them on the **Display** tab, for games you've barely played or for any game at random, or turn them off. To hear your Steam soundtracks
    while it runs, turn them on on the **Music** tab.
 3. In Screen Saver Settings, set **Wait** to how many idle minutes to wait before it starts. Tick **On resume, display
    logon screen** if you want your PC to lock when you come back. Click **Preview** to try it (move the mouse or press
